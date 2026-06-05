@@ -1,0 +1,327 @@
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --navy:       #0d1b2e;
+  --navy-mid:   #162540;
+  --navy-light: #1e3255;
+  --border:     #253c5e;
+  --orange:     #e8640a;
+  --orange-l:   #f07830;
+  --orange-dim: rgba(232,100,10,0.12);
+  --white:      #ffffff;
+  --muted:      #7a94b0;
+  --text:       #c8daf0;
+  --green:      #5fc994;
+  --green-dim:  rgba(95,201,148,0.12);
+  --gold:       #f5c842;
+  --gold-dim:   rgba(245,200,66,0.12);
+  --mono:       'DM Mono', monospace;
+  --sans:       'DM Sans', sans-serif;
+  --title:      'Syne', sans-serif;
+  --radius:     8px;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background-color: var(--navy);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  /* Grid background */
+  background-image:
+    linear-gradient(rgba(37,60,94,0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,60,94,0.35) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+}
+
+/* Radial glow at top */
+body::before {
+  content: '';
+  position: fixed;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(232,100,10,0.10) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ── Typography helpers ────────────────────────────────────── */
+.font-title  { font-family: var(--title); }
+.font-mono   { font-family: var(--mono); }
+.font-sans   { font-family: var(--sans); }
+
+.text-orange { color: var(--orange); }
+.text-green  { color: var(--green); }
+.text-gold   { color: var(--gold); }
+.text-muted  { color: var(--muted); }
+.text-white  { color: var(--white); }
+
+/* ── Layout helpers ────────────────────────────────────────── */
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.container--wide {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Card ──────────────────────────────────────────────────── */
+.card {
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+/* ── Button styles ─────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 12px 28px;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+  text-decoration: none;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn--primary {
+  background: var(--orange);
+  color: var(--white);
+  border-color: var(--orange);
+}
+.btn--primary:hover {
+  background: var(--orange-l);
+  border-color: var(--orange-l);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn--ghost:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.btn--success {
+  background: var(--green-dim);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.btn--large {
+  font-size: 1rem;
+  padding: 16px 40px;
+  letter-spacing: 0.12em;
+}
+
+/* ── Eyebrow label ─────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  background: var(--orange);
+}
+
+/* ── Signal / progress bar ─────────────────────────────────── */
+.signal-track {
+  height: 6px;
+  background: var(--navy-light);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.signal-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--orange), var(--gold));
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Code editor area ──────────────────────────────────────── */
+.code-editor {
+  background: #080f1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  color: var(--text);
+  width: 100%;
+  min-height: 200px;
+  resize: vertical;
+  line-height: 1.7;
+  outline: none;
+  transition: border-color 0.2s;
+  tab-size: 2;
+}
+.code-editor:focus { border-color: var(--orange); }
+.code-editor--correct { border-color: var(--green); }
+.code-editor--error   { border-color: #e85a4a; }
+
+/* ── Alert / feedback banners ──────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+
+.alert--success {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.alert--error {
+  background: rgba(232,90,74,0.12);
+  border-color: #e85a4a;
+  color: #e85a4a;
+}
+
+.alert--hint {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Level progress dots ───────────────────────────────────── */
+.level-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.level-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  transition: background 0.3s, border-color 0.3s;
+}
+.level-dot--done    { background: var(--green); border-color: var(--green); }
+.level-dot--active  { background: var(--orange); border-color: var(--orange); }
+
+/* ── Stars canvas ──────────────────────────────────────────── */
+.star-field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Spinning record (CSS art) ─────────────────────────────── */
+@keyframes spin-record {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.record {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, var(--navy-mid) 18%, transparent 18.5%),
+    repeating-conic-gradient(var(--gold) 0deg 2deg, #b8922e 2deg 5deg);
+  border: 3px solid var(--gold);
+  animation: spin-record 8s linear infinite;
+  position: relative;
+  box-shadow: 0 0 40px rgba(245,200,66,0.25), 0 0 80px rgba(245,200,66,0.10);
+}
+
+.record::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--navy);
+  border: 2px solid var(--gold);
+}
+
+/* ── Stat tiles ────────────────────────────────────────────── */
+.stat-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-tile {
+  flex: 1;
+  min-width: 120px;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  text-align: center;
+}
+
+.stat-tile__value {
+  font-family: var(--title);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.1;
+}
+
+.stat-tile__label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* ── Transitions ───────────────────────────────────────────── */
+.page-enter-active,
+.page-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.page-enter-from   { opacity: 0; transform: translateY(12px); }
+.page-leave-to     { opacity: 0; transform: translateY(-12px); }
