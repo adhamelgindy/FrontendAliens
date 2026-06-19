@@ -18,11 +18,10 @@
         </h1>
         <p class="level-page__narrative">
           Voyager's onboard display is dark. The component controlling the
-          signal readout is broken — ref() calls are missing and the computed
-          property isn't wired up. Fix the script setup block. Remember:
-          this is per-component reactivity, not a plugin. In Nuxt, reactivity
-          lives here in components (script setup). This is NOT a plugin — it runs
-          per-component, every time one mounts. Plugins and config don't belong here.
+          signal readout is broken. Fix the vue script setup block. Remember:
+          this is per-component reactivity, not a plugin. 
+          Adjust the code in order to fix Reactivity.
+          PS: Format variables as one-liner
         </p>
       </div>
 

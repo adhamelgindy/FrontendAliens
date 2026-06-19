@@ -22,7 +22,7 @@
       <p class="landing__desc">
         Year 3000. The frontend fleet is degraded. Laptops are slow, builds take minutes, hot reload barely survives.
         <br /><br />
-        Your team travels to Saturn to acquire quantum-grade hardware. During transit, a collision with Voyager 1 occurs. Impact damage corrupts the Golden Frontend Runtime Archive—the Golden Record—containing critical app infrastructure logic.
+        The team travels to Saturn to acquire quantum-grade hardware. During transit, a collision with Voyager 1 occurs. Impact damage corrupts the Frontend Runtime Archive—the Golden Record—containing critical app infrastructure logic.
         <br /><br />
         Three systems are broken. You are the only engineer who understands all three layers.
       </p>
