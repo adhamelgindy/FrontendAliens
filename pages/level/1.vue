@@ -12,58 +12,84 @@
 
       <!-- Header -->
       <div class="level-page__header">
-        <p class="eyebrow">Component Boot Failure</p>
+        <p class="eyebrow">Warmup Challenge</p>
         <h1 class="level-page__title font-title">
-          Level 01 — Component Layer
+          Level 01 — Custom Directive
         </h1>
         <p class="level-page__narrative">
-          Voyager's onboard display is dark. The component controlling the
-          signal readout is broken. Fix the vue script setup block. Remember:
-          this is per-component reactivity, not a plugin. 
-          Adjust the code in order to fix Reactivity.
-          PS: Format variables as one-liner
+          The signal bar is unresponsive. Implement a custom directive that updates the bar color based on signal strength and enables blinking when critical (below 20%). Fill in the updateSignal function and complete both mounted and updated lifecycle hooks.
         </p>
       </div>
 
-      <!-- Signal bar -->
-      <SignalBar :percent="signalPercent" :correct="isCorrect" />
-
-      <!-- Editor -->
-      <div class="level-page__editor-wrap">
-        <div class="level-page__editor-label font-mono">
-          <span class="text-orange">signal-readout.vue</span>
-          <span class="text-muted" style="margin-left:auto; font-size:0.7rem;">
-            Fix the script setup block
-          </span>
+      <!-- Control panel with live preview -->
+      <div class="level-page__control-display">
+        <div class="control-display-label font-mono text-muted" style="font-size:0.7rem; letter-spacing:0.1em; margin-bottom:16px;">
+          CONTROL PANEL — LIVE PREVIEW
         </div>
-        <textarea
-          v-model="userCode"
-          class="code-editor"
-          :class="{
-            'code-editor--correct': isCorrect,
-            'code-editor--error': showError,
-          }"
-          spellcheck="false"
-          autocorrect="off"
-          autocapitalize="off"
-          :disabled="isCorrect"
-          rows="12"
-        />
+        <div class="control-display-panel">
+          <!-- Left joystick -->
+          <div class="control-display-section">
+            <div class="joystick-base-display">
+              <div class="joystick-stick-display"></div>
+            </div>
+          </div>
+
+          <!-- Center display bar -->
+          <div class="control-display-section control-display-bar">
+            <div class="display-info-row">
+              <span class="display-label">Signal:</span>
+              <span class="display-value">{{ previewSignalStrength }}%</span>
+            </div>
+            <div class="progress-display">
+              <div
+                class="bar-display"
+                :style="{
+                  width: previewSignalStrength + '%',
+                  backgroundColor: previewBarColor,
+                  animation: previewBarBlink ? 'blink 0.5s infinite' : ''
+                }"
+              />
+            </div>
+          </div>
+
+          <!-- Right controls -->
+          <div class="control-display-section">
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn--sm btn--ghost" @click="boostPreview" title="Boost Signal">+</button>
+              <button class="btn btn--sm btn--ghost" @click="reducePreview" title="Reduce Signal">−</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor sidebar toggle -->
+      <button class="editor-toggle btn btn--ghost" @click="editorOpen = !editorOpen">
+        {{ editorOpen ? '◀ Hide' : '▶ Show' }} Code Editor
+      </button>
+
+      <!-- Documentation -->
+      <div class="alert alert--info">
+        <span>
+          Learn about custom directives:
+          <a href="https://vuejs.org/guide/reusability/custom-directives.html" target="_blank" rel="noopener noreferrer" class="doc-link">
+            Vue 3 Custom Directives Guide ↗
+          </a>
+        </span>
       </div>
 
       <!-- Hint -->
       <div v-if="showHint" class="alert alert--hint">
-        <span>Hint: ref() wraps a value so Vue can track changes. Without it, signalStrength++ updates the number but Vue never re-renders. computed() is like a formula — it re-runs automatically whenever its dependencies change. A plain ternary evaluates once at startup and never updates.</span>
+        <span>Hint: Use binding.value to access the directive's value. Change backgroundColor based on signal strength: red if < 40, orange if < 80, green otherwise. Apply the 'blink' animation when value < 20, remove it otherwise. Call updateSignal in both mounted and updated hooks.</span>
       </div>
 
       <!-- Error feedback -->
       <div v-if="showError && !isCorrect" class="alert alert--error">
-        <span>Reactivity error — the component display is still broken. Check that both ref() and computed() are used correctly.</span>
+        <span>Directive error — the signal bar is still not responding correctly. Check that the updateSignal function handles all cases and both hooks call it properly.</span>
       </div>
 
       <!-- Success banner -->
       <div v-if="isCorrect" class="alert alert--success">
-        <span>SIGNAL LOCKED — COMPONENT LAYER RESTORED. Proceeding to Plugin Bay…</span>
+        <span>SIGNAL LOCKED — DIRECTIVE APPLIED. Signal bar is operational. Proceeding to Level 02…</span>
       </div>
 
       <!-- Actions -->
@@ -96,33 +122,106 @@
 
     </div>
   </div>
+
+  <!-- Editor sidebar -->
+  <div class="editor-sidebar" :class="{ 'editor-sidebar--open': editorOpen }">
+    <div class="editor-sidebar__header">
+      <span class="text-orange font-mono">signal-readout.vue</span>
+      <button class="btn btn--ghost btn--sm" @click="editorOpen = false">✕</button>
+    </div>
+    <textarea
+      v-model="userCode"
+      class="editor-sidebar__textarea"
+      :class="{
+        'editor-sidebar__textarea--correct': isCorrect,
+        'editor-sidebar__textarea--error': showError,
+      }"
+      spellcheck="false"
+      autocorrect="off"
+      autocapitalize="off"
+      :disabled="isCorrect"
+      :rows="codeRows"
+      @input="updateRows"
+    />
+    <div class="editor-sidebar__footer">
+      <button
+        v-if="!isCorrect"
+        class="btn btn--primary btn--sm"
+        @click="checkAnswer"
+      >
+        ▶ Transmit
+      </button>
+    </div>
+  </div>
+
+  <!-- Editor sidebar backdrop -->
+  <div
+    v-if="editorOpen"
+    class="editor-sidebar__backdrop"
+    @click="editorOpen = false"
+  ></div>
 </template>
 
 <script setup lang="ts">
 const router = useRouter()
 const game   = useGame()
 
-const BROKEN_CODE = '<script setup>\nconst signalStrength = 0\nconst statusMessage = signalStrength >= 80 ? \'STRONG\' : \'WEAK\'\n</' + 'script>\n\n<template>\n  <div>\n    <p>Signal: {{ signalStrength }}%</' + 'p>\n    <p>Status: {{ statusMessage }}</' + 'p>\n    <button @click="signalStrength++">Boost Signal</' + 'button>\n  </' + 'div>\n</' + 'template>'
+const BROKEN_CODE = '<script setup>\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction boost() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction reduce() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el, value) {\n  // TODO:\n  // Update the bar background color based on the signal strength (el.style.backgroundColor = "Color as string").\n  // Enable blinking when the signal is below 20 (el.style.animation = "").\n  // Disable blinking otherwise.\n}\n\nconst vSignal = {\n  mounted(el, binding) {\n    // TODO:\n    // Apply the initial styles by calling updateSignal().\n  },\n\n  updated(el, binding) {\n    // TODO:\n    // Update the styles whenever the signal strength changes by calling updateSignal().\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Signal Strength</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="bar"\n        v-signal="signalStrength"\n        :style="{ width: signalStrength + \'%\' }"\n      />\n    </' + 'div>\n\n    <p>{{ signalStrength }}%</' + 'p>\n\n    <button @click="boost">Boost</' + 'button>\n    <button @click="reduce">Reduce</' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  height: 20px;\n  border: 1px solid #ccc;\n}\n\n.bar {\n  height: 100%;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
 
-const CORRECT_CODE = '<script setup>\nconst signalStrength = ref(0)\nconst statusMessage = computed(() => signalStrength.value >= 80 ? \'STRONG\' : \'WEAK\')\n</' + 'script>\n\n<template>\n  <div>\n    <p>Signal: {{ signalStrength }}%</' + 'p>\n    <p>Status: {{ statusMessage }}</' + 'p>\n    <button @click="signalStrength++">Boost Signal</' + 'button>\n  </' + 'div>\n</' + 'template>'
+const CORRECT_CODE = '<script setup>\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction boost() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction reduce() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el, value) {\n  if (value < 40) {\n    el.style.backgroundColor = \'red\'\n  } else if (value < 80) {\n    el.style.backgroundColor = \'orange\'\n  } else {\n    el.style.backgroundColor = \'green\'\n  }\n\n  if (value < 20) {\n    el.style.animation = \'blink 0.5s infinite\'\n  } else {\n    el.style.animation = \'\'\n  }\n}\n\nconst vSignal = {\n  mounted(el, binding) {\n    updateSignal(el, binding.value)\n  },\n\n  updated(el, binding) {\n    updateSignal(el, binding.value)\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Signal Strength</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="bar"\n        v-signal="signalStrength"\n        :style="{ width: signalStrength + \'%\' }"\n      />\n    </' + 'div>\n\n    <p>{{ signalStrength }}%</' + 'p>\n\n    <button @click="boost">Boost</' + 'button>\n    <button @click="reduce">Reduce</' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  height: 20px;\n  border: 1px solid #ccc;\n}\n\n.bar {\n  height: 100%;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
 
 const userCode     = ref(BROKEN_CODE)
 const isCorrect    = ref(false)
 const showError    = ref(false)
 const showHint     = ref(false)
+const codeRows     = ref(BROKEN_CODE.split('\n').length)
+const previewSignalStrength = ref(50)
+const editorOpen   = ref(false)
+
+function updateRows() {
+  codeRows.value = userCode.value.split('\n').length
+}
+
+function boostPreview() {
+  if (previewSignalStrength.value < 100) {
+    previewSignalStrength.value += 10
+  }
+}
+
+function reducePreview() {
+  if (previewSignalStrength.value > 0) {
+    previewSignalStrength.value -= 10
+  }
+}
+
+// Detect whether the user has implemented the color logic
+const hasColorLogic = computed(() =>
+  userCode.value.includes('backgroundColor') &&
+  userCode.value.includes('binding.value')
+)
+
+const hasBlinkLogic = computed(() =>
+  userCode.value.includes('animation') &&
+  userCode.value.includes('binding.value')
+)
+
+// Drive the bar color from the user's implementation intent
+const previewBarColor = computed(() => {
+  if (!hasColorLogic.value) return 'orange'
+  const v = previewSignalStrength.value
+  if (v < 40) return 'red'
+  if (v < 80) return 'orange'
+  return 'green'
+})
+
+const previewBarBlink = computed(() =>
+  hasBlinkLogic.value && previewSignalStrength.value < 20
+)
 
 function normalize(s: string): string {
   return s.replace(/\s+/g, ' ').trim()
 }
 
-const signalPercent = computed(() => {
-  if (isCorrect.value) return 100
-  // rough partial credit: count how many correct lines the user has
-  const userLines    = userCode.value.split('\n').map(l => l.trim())
-  const correctLines = CORRECT_CODE.split('\n').map(l => l.trim())
-  const matches = userLines.filter((l, i) => correctLines[i] === l).length
-  return Math.round((matches / correctLines.length) * 80) // max 80 until fully correct
-})
 
 function checkAnswer() {
   if (normalize(userCode.value) === normalize(CORRECT_CODE)) {
@@ -230,5 +329,180 @@ onMounted(() => {
 .btn--sm {
   padding: 8px 16px;
   font-size: 0.75rem;
+}
+
+.doc-link {
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.doc-link:hover {
+  color: var(--orange);
+  text-decoration: underline;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.level-page__control-display {
+  padding: 20px;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0a1428 0%, #1a2a3a 50%, #0f1820 100%);
+  box-shadow: inset 0 0 20px rgba(255, 215, 0, 0.1), 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.control-display-panel {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.control-display-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-display-bar {
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.display-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-family: var(--mono);
+}
+
+.display-label {
+  color: var(--muted);
+}
+
+.display-value {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.progress-display {
+  width: 100%;
+  height: 28px;
+  border: 1px solid var(--gold);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-display {
+  height: 100%;
+  transition: width 0.3s, background-color 0.3s;
+  background-color: orange;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.joystick-base-display {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #1a2a3a 0%, #0a1428 100%);
+  border: 2px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 215, 0, 0.2);
+}
+
+.joystick-stick-display {
+  width: 28px;
+  height: 28px;
+  background: radial-gradient(circle at 30% 30%, #ff6400, #cc5200);
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 100, 0, 0.5);
+}
+
+.editor-toggle {
+  font-size: 0.9rem;
+  padding: 10px 16px;
+}
+
+.editor-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 500px;
+  background: var(--navy);
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-out;
+  z-index: 1000;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.editor-sidebar--open {
+  transform: translateX(0);
+}
+
+.editor-sidebar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.editor-sidebar__textarea {
+  flex: 1;
+  border: none;
+  background: var(--navy-dark);
+  color: var(--text);
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+}
+
+.editor-sidebar__textarea:focus {
+  outline: none;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.editor-sidebar__textarea--correct {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--text);
+}
+
+.editor-sidebar__textarea--error {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.editor-sidebar__footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+}
+
+.editor-sidebar__backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
 }
 </style>

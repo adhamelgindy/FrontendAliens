@@ -25,24 +25,26 @@ const props = withDefaults(defineProps<{
 // Animate the displayed percentage toward props.percent
 const displayPct = ref(0)
 
-watch(
-  () => props.percent,
-  (target) => {
-    const start = displayPct.value
-    const delta = target - start
-    const steps = 40
-    let   step  = 0
-    const interval = setInterval(() => {
-      step++
-      displayPct.value = Math.round(start + delta * (step / steps))
-      if (step >= steps) {
-        displayPct.value = target
-        clearInterval(interval)
-      }
-    }, 15)
-  },
-  { immediate: true },
-)
+onMounted(() => {
+  watch(
+    () => props.percent,
+    (target) => {
+      const start = displayPct.value
+      const delta = target - start
+      const steps = 40
+      let   step  = 0
+      const interval = setInterval(() => {
+        step++
+        displayPct.value = Math.round(start + delta * (step / steps))
+        if (step >= steps) {
+          displayPct.value = target
+          clearInterval(interval)
+        }
+      }, 15)
+    },
+    { immediate: true },
+  )
+})
 
 const statusText = computed(() => {
   if (props.correct)       return 'SIGNAL LOCK ACQUIRED'

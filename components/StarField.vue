@@ -53,13 +53,6 @@ onMounted(() => {
       if (s.opacity >= 1)   { s.opacity = 1;   s.opacityDir = -1 }
       if (s.opacity <= 0.1) { s.opacity = 0.1; s.opacityDir = 1  }
 
-      // Slow downward drift
-      s.y += s.speed
-      if (s.y > canvas.height) {
-        s.y = 0
-        s.x = Math.random() * canvas.width
-      }
-
       ctx.beginPath()
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
       ctx.fillStyle = `rgba(200,218,240,${s.opacity})`
