@@ -22,9 +22,9 @@
       </div>
 
       <!-- Control panel with live preview -->
-      <div class="level-page__control-display">
+      <div v-if="!isCorrect" class="level-page__control-display">
         <div class="control-display-label font-mono text-muted" style="font-size:0.7rem; letter-spacing:0.1em; margin-bottom:16px;">
-          CONTROL PANEL — LIVE PREVIEW
+          CONTROL PANEL — YELLOW (AWAITING SIGNAL)
         </div>
         <div class="control-display-panel">
           <!-- Left joystick -->
