@@ -14,10 +14,10 @@
       <div class="level-page__header">
         <p class="eyebrow">Warmup Challenge</p>
         <h1 class="level-page__title font-title">
-          Level 01 — Custom Directive
+          Level 01 — Restore the Golden Record Signal
         </h1>
         <p class="level-page__narrative">
-          The signal bar is unresponsive. Implement a custom directive that updates the bar color based on signal strength and enables blinking when critical (below 20%). Fill in the updateSignal function and complete both mounted and updated lifecycle hooks.
+          The Golden Record aboard Voyager 1 was damaged before your crew recovered it. One of the corrupted systems is responsible for displaying the strength of the incoming transmission. Implement the v-signal directive so the application can correctly visualize the transmission signal.
         </p>
       </div>
 
@@ -50,6 +50,7 @@
                 }"
               />
             </div>
+            <SignalBar :percent="previewSignalStrength" :correct="isCorrect" />
           </div>
 
           <!-- Right controls -->
@@ -79,7 +80,7 @@
 
       <!-- Hint -->
       <div v-if="showHint" class="alert alert--hint">
-        <span>Hint: Use binding.value to access the directive's value. Change backgroundColor based on signal strength: red if < 40, orange if < 80, green otherwise. Apply the 'blink' animation when value < 20, remove it otherwise. Call updateSignal in both mounted and updated hooks.</span>
+        <span>Hint: Implement updateSignal to set el.style.backgroundColor based on value: red if < 40, orange if < 80, green otherwise. Set el.style.animation to 'blink 0.5s infinite' when value < 20, empty string otherwise. In mounted and updated hooks, call updateSignal with the binding.value.</span>
       </div>
 
       <!-- Error feedback -->
@@ -89,7 +90,51 @@
 
       <!-- Success banner -->
       <div v-if="isCorrect" class="alert alert--success">
-        <span>SIGNAL LOCKED — DIRECTIVE APPLIED. Signal bar is operational. Proceeding to Level 02…</span>
+        <span>✧ SIGNAL LOCKED — GOLDEN RECORD RESTORED ✧</span>
+      </div>
+
+      <!-- Success celebration -->
+      <div v-if="isCorrect" class="success-celebration">
+        <div class="celebration-content">
+          <h3 class="celebration-title">Transmission Status: ACTIVE</h3>
+          <p class="celebration-text">The Golden Record signal is now being tracked across the cosmos. Watch as it responds to signal strength changes.</p>
+
+          <!-- Live signal visualization -->
+          <div class="celebration-signal-demo">
+            <div class="signal-demo-header">Live Signal Feed</div>
+            <div class="signal-demo-container">
+              <div class="signal-demo-controls">
+                <button class="btn btn--sm btn--ghost" @click="celebrationSignalStrength -= 10" :disabled="celebrationSignalStrength <= 0">
+                  − Weaken
+                </button>
+                <div class="signal-demo-value">{{ celebrationSignalStrength }}%</div>
+                <button class="btn btn--sm btn--ghost" @click="celebrationSignalStrength += 10" :disabled="celebrationSignalStrength >= 100">
+                  Strengthen +
+                </button>
+              </div>
+
+              <div class="signal-demo-bar-wrapper">
+                <div class="progress-demo">
+                  <div
+                    class="signal-bar-demo"
+                    :style="{
+                      width: `${celebrationSignalStrength}%`,
+                      backgroundColor: getSignalColor(celebrationSignalStrength),
+                      animation: celebrationSignalStrength < 20 ? 'blink 0.5s infinite' : ''
+                    }"
+                  />
+                </div>
+              </div>
+
+              <div class="signal-status-text">
+                <span v-if="celebrationSignalStrength < 40" class="status-critical">🔴 CRITICAL</span>
+                <span v-else-if="celebrationSignalStrength < 80" class="status-weak">🟠 WEAK</span>
+                <span v-else class="status-strong">🟢 STRONG</span>
+                <span v-if="celebrationSignalStrength < 20" class="status-blinking">BLINKING</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Actions -->
@@ -163,12 +208,11 @@
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
-const game   = useGame()
+const game = useGame()
 
-const BROKEN_CODE = '<script setup>\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction boost() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction reduce() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el, value) {\n  // TODO:\n  // Update the bar background color based on the signal strength (el.style.backgroundColor = "Color as string").\n  // Enable blinking when the signal is below 20 (el.style.animation = "").\n  // Disable blinking otherwise.\n}\n\nconst vSignal = {\n  mounted(el, binding) {\n    // TODO:\n    // Apply the initial styles by calling updateSignal().\n  },\n\n  updated(el, binding) {\n    // TODO:\n    // Update the styles whenever the signal strength changes by calling updateSignal().\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Signal Strength</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="bar"\n        v-signal="signalStrength"\n        :style="{ width: signalStrength + \'%\' }"\n      />\n    </' + 'div>\n\n    <p>{{ signalStrength }}%</' + 'p>\n\n    <button @click="boost">Boost</' + 'button>\n    <button @click="reduce">Reduce</' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  height: 20px;\n  border: 1px solid #ccc;\n}\n\n.bar {\n  height: 100%;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
+const BROKEN_CODE = '<script setup lang="ts">\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction strengthenSignal() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction weakenSignal() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el: HTMLElement, value: number) {\n  // TODO:\n  // - Set the signal color.\n  // - Enable blinking when the signal is below 20.\n  // - Disable blinking otherwise.\n}\n\nconst vSignal = {\n  mounted(el: HTMLElement, binding: { value: number }) {\n    // TODO:\n    // Apply the initial signal state.\n  },\n\n  updated(el: HTMLElement, binding: { value: number }) {\n    // TODO:\n    // Update the signal when the value changes.\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Golden Record Transmission</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="signal-bar"\n        v-signal="signalStrength"\n        :style="{ width: `${signalStrength}%` }"\n      />\n    </' + 'div>\n\n    <p>Signal Strength: {{ signalStrength }}%</' + 'p>\n\n    <button @click="strengthenSignal">\n      Strengthen Signal\n    </' + 'button>\n\n    <button @click="weakenSignal">\n      Weaken Signal\n    </' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  border: 1px solid #ccc;\n}\n\n.signal-bar {\n  height: 20px;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
 
-const CORRECT_CODE = '<script setup>\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction boost() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction reduce() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el, value) {\n  if (value < 40) {\n    el.style.backgroundColor = \'red\'\n  } else if (value < 80) {\n    el.style.backgroundColor = \'orange\'\n  } else {\n    el.style.backgroundColor = \'green\'\n  }\n\n  if (value < 20) {\n    el.style.animation = \'blink 0.5s infinite\'\n  } else {\n    el.style.animation = \'\'\n  }\n}\n\nconst vSignal = {\n  mounted(el, binding) {\n    updateSignal(el, binding.value)\n  },\n\n  updated(el, binding) {\n    updateSignal(el, binding.value)\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Signal Strength</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="bar"\n        v-signal="signalStrength"\n        :style="{ width: signalStrength + \'%\' }"\n      />\n    </' + 'div>\n\n    <p>{{ signalStrength }}%</' + 'p>\n\n    <button @click="boost">Boost</' + 'button>\n    <button @click="reduce">Reduce</' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  height: 20px;\n  border: 1px solid #ccc;\n}\n\n.bar {\n  height: 100%;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
+const CORRECT_CODE = '<script setup lang="ts">\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction strengthenSignal() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction weakenSignal() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el: HTMLElement, value: number) {\n  if (value < 40) {\n    el.style.backgroundColor = \'red\'\n  } else if (value < 80) {\n    el.style.backgroundColor = \'orange\'\n  } else {\n    el.style.backgroundColor = \'green\'\n  }\n\n  if (value < 20) {\n    el.style.animation = \'blink 0.5s infinite\'\n  } else {\n    el.style.animation = \'\'\n  }\n}\n\nconst vSignal = {\n  mounted(el: HTMLElement, binding: { value: number }) {\n    updateSignal(el, binding.value)\n  },\n\n  updated(el: HTMLElement, binding: { value: number }) {\n    updateSignal(el, binding.value)\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Golden Record Transmission</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="signal-bar"\n        v-signal="signalStrength"\n        :style="{ width: `${signalStrength}%` }"\n      />\n    </' + 'div>\n\n    <p>Signal Strength: {{ signalStrength }}%</' + 'p>\n\n    <button @click="strengthenSignal">\n      Strengthen Signal\n    </' + 'button>\n\n    <button @click="weakenSignal">\n      Weaken Signal\n    </' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  border: 1px solid #ccc;\n}\n\n.signal-bar {\n  height: 20px;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
 
 const userCode     = ref(BROKEN_CODE)
 const isCorrect    = ref(false)
@@ -176,6 +220,7 @@ const showError    = ref(false)
 const showHint     = ref(false)
 const codeRows     = ref(BROKEN_CODE.split('\n').length)
 const previewSignalStrength = ref(50)
+const celebrationSignalStrength = ref(50)
 const editorOpen   = ref(false)
 
 function updateRows() {
@@ -192,6 +237,12 @@ function reducePreview() {
   if (previewSignalStrength.value > 0) {
     previewSignalStrength.value -= 10
   }
+}
+
+function getSignalColor(value: number): string {
+  if (value < 40) return 'red'
+  if (value < 80) return 'orange'
+  return 'green'
 }
 
 // Detect whether the user has implemented the color logic
@@ -228,7 +279,6 @@ function checkAnswer() {
     isCorrect.value = true
     showError.value = false
     game.completeLevel(1)
-    setTimeout(() => router.push('/level/2'), 2000)
   } else {
     showError.value = true
   }
@@ -504,5 +554,126 @@ onMounted(() => {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
+}
+
+.success-celebration {
+  padding: 24px;
+  border: 2px solid var(--green);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 20px rgba(52, 211, 153, 0.05);
+}
+
+.celebration-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.celebration-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--green);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.celebration-text {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.celebration-signal-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.signal-demo-header {
+  font-size: 0.8rem;
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.signal-demo-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signal-demo-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.signal-demo-value {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+.signal-demo-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-demo {
+  width: 100%;
+  height: 40px;
+  border: 2px solid rgba(52, 211, 153, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-bar-demo {
+  height: 100%;
+  transition: width 0.3s, background-color 0.3s;
+  background-color: orange;
+}
+
+.signal-status-text {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.status-critical {
+  color: #ef4444;
+}
+
+.status-weak {
+  color: #f97316;
+}
+
+.status-strong {
+  color: #22c55e;
+}
+
+.status-blinking {
+  color: var(--gold);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 </style>
