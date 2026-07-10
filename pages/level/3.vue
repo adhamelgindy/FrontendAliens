@@ -26,11 +26,11 @@
             Level 03 — Inject as a Plugin
           </h1>
           <p class="level-page__narrative">
-            The module registered the beacon at build time — but components
-            still can't reach it. Modules configure Nuxt; they don't inject
-            anything into the running app. Rewrite it as a Nuxt plugin so the
-            beacon is initialized when the app boots and available to every
-            component via <code>nuxtApp.provide</code>.
+            The module registered the signal tracker at build time — but
+            components still can't reach it. Modules configure Nuxt; they don't
+            inject anything into the running app. Rewrite it as a Nuxt plugin so
+            the signal tracker is initialized when the app boots and available to
+            every component via <code>nuxtApp.provide</code>.
           </p>
         </div>
 
@@ -63,8 +63,8 @@
               :class="['test-case', buildChecks.provide ? 'test-case--pass' : 'test-case--fail']"
             >
               <span class="test-case__icon">{{ buildChecks.provide ? '✓' : '✗' }}</span>
-              <span class="test-case__label">nuxtApp.provide('beacon', ...)</span>
-              <span class="test-case__expect text-muted">— beacon not injected</span>
+              <span class="test-case__label">nuxtApp.provide('signalTracker', ...)</span>
+              <span class="test-case__expect text-muted">— signal tracker not injected</span>
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@
         <!-- Editor -->
         <div class="level-page__editor-wrap">
           <div class="level-page__editor-label font-mono">
-            <span class="text-orange">plugins/beacon.ts</span>
+            <span class="text-orange">plugins/signalTracker.ts</span>
             <span class="text-muted" style="margin-left:auto; font-size:0.7rem;">
               Implement the plugin
             </span>
@@ -94,7 +94,7 @@
 
         <!-- Hint -->
         <div v-if="showHint" class="alert alert--hint">
-          <span>Hint: A Nuxt plugin must be exported with <code>export default defineNuxtPlugin((nuxtApp) =&gt; {})</code>. The <code>nuxtApp</code> argument gives you access to <code>nuxtApp.provide('key', value)</code>, which injects the value into every component as <code>$key</code>. Use <code>useScript(url)</code> to load the beacon script.</span>
+          <span>Hint: A Nuxt plugin must be exported with <code>export default defineNuxtPlugin((nuxtApp) =&gt; {})</code>. The <code>nuxtApp</code> argument gives you access to <code>nuxtApp.provide('key', value)</code>, which injects the value into every component as <code>$key</code>. Use <code>useScript(url)</code> to load the signal tracker script.</span>
         </div>
 
         <!-- Error feedback -->
@@ -104,7 +104,7 @@
 
         <!-- Success banner -->
         <div v-if="isCorrect" class="alert alert--success">
-          <span>✧ PLUGIN INJECTED — GOLDEN RECORD FULLY RESTORED ✧ The beacon is live. Initiating finale sequence…</span>
+          <span>✧ PLUGIN INJECTED — GOLDEN RECORD FULLY RESTORED ✧ The signal tracker is live. Initiating finale sequence…</span>
         </div>
 
         <!-- Actions -->
@@ -146,16 +146,16 @@ const game   = useGame()
 
 const locked = computed(() => !game.canAccessLevel(3))
 
-const BROKEN_CODE = `// plugins/beacon.ts
+const BROKEN_CODE = `// plugins/signalTracker.ts
 export default defineNuxtPlugin(() => {
-  // TODO: initialize the beacon using useScript
-  // TODO: provide it to the app as 'beacon'
+  // TODO: initialize the signal tracker using useScript
+  // TODO: provide it to the app as 'signalTracker'
 })`
 
-const CORRECT_CODE = `// plugins/beacon.ts
+const CORRECT_CODE = `// plugins/signalTracker.ts
 export default defineNuxtPlugin((nuxtApp) => {
-  const beacon = useScript('https://beacon.voyager.space/signal.js')
-  nuxtApp.provide('beacon', beacon)
+  const signalTracker = useScript('https://tracker.voyager.space/signal.js')
+  nuxtApp.provide('signalTracker', signalTracker)
 })`
 
 const userCode  = ref(BROKEN_CODE)
@@ -173,7 +173,7 @@ const buildChecks = computed(() => {
   return {
     exported: /export\s+default\s+defineNuxtPlugin/.test(c),
     nuxtApp: /defineNuxtPlugin\s*\(\s*\(nuxtApp\)/.test(c),
-    provide: /nuxtApp\.provide\s*\(/.test(c),
+    provide: /nuxtApp\.provide\s*\(\s*['"]signalTracker['"]/.test(c),
   }
 })
 

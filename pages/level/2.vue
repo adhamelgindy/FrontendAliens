@@ -28,7 +28,7 @@
           </h1>
           <p class="level-page__narrative">
             The directive worked, but it's running inside a component — nothing
-            is configured at the Nuxt layer. Rewrite the signal beacon as a Nuxt
+            is configured at the Nuxt layer. Rewrite the signal tracker as a Nuxt
             module so Nuxt itself registers it during startup, before any
             component exists.
           </p>
@@ -57,7 +57,7 @@
             </div>
             <div :class="['test-case', moduleChecks.addPlugin ? 'test-case--pass' : 'test-case--fail']">
               <span class="test-case__icon">{{ moduleChecks.addPlugin ? '✓' : '✗' }}</span>
-              <span class="test-case__label">addPlugin('./runtime/beacon.plugin')</span>
+              <span class="test-case__label">addPlugin('./runtime/signalTracker.plugin')</span>
               <span class="test-case__expect text-muted">— plugin not registered</span>
             </div>
           </div>
@@ -98,7 +98,7 @@
 
         <!-- Success -->
         <div v-if="isCorrect" class="alert alert--success">
-          <span>✧ MODULE REGISTERED — BUILD CONFIGURED ✧ Nuxt knows about the beacon now. Continue to Level 03 to make it available at runtime.</span>
+          <span>✧ MODULE REGISTERED — BUILD CONFIGURED ✧ Nuxt knows about the signal tracker now. Continue to Level 03 to make it available at runtime.</span>
         </div>
 
         <!-- Actions -->
@@ -143,22 +143,22 @@ const locked = computed(() => !game.canAccessLevel(2))
 const BROKEN_CODE = `// modules/signal.ts
 export default defineNuxtModule({
   meta: {
-    name: 'signal-beacon',
+    name: 'signal-tracker',
   },
   setup(options, nuxt) {
     // TODO: hook into 'modules:done'
-    // TODO: inside the hook, call addPlugin with the beacon path
+    // TODO: inside the hook, call addPlugin with the signalTracker path
   },
 })`
 
 const CORRECT_CODE = `// modules/signal.ts
 export default defineNuxtModule({
   meta: {
-    name: 'signal-beacon',
+    name: 'signal-tracker',
   },
   setup(options, nuxt) {
     nuxt.hook('modules:done', () => {
-      addPlugin('./runtime/beacon.plugin')
+      addPlugin('./runtime/signalTracker.plugin')
     })
   },
 })`
@@ -177,7 +177,7 @@ const moduleChecks = computed(() => {
   return {
     exported:  /export\s+default\s+defineNuxtModule/.test(c),
     hook:      /nuxt\.hook\s*\(\s*['"]modules:done['"]/.test(c),
-    addPlugin: /addPlugin\s*\(/.test(c),
+    addPlugin: /addPlugin\s*\(\s*['"]\.\/runtime\/signalTracker\.plugin['"]/.test(c),
   }
 })
 
