@@ -26,11 +26,11 @@
             Level 03 — Inject as a Plugin
           </h1>
           <p class="level-page__narrative">
-            The layers are classified, but the signal still isn't reaching the
-            components. Modules only run at build time — anything they set up
-            disappears before the app boots. Rewrite the beacon as a Nuxt plugin
-            so it initialises at runtime and is injected into every component
-            via <code>nuxtApp.provide</code>.
+            The module registered the beacon at build time — but components
+            still can't reach it. Modules configure Nuxt; they don't inject
+            anything into the running app. Rewrite it as a Nuxt plugin so the
+            beacon is initialized when the app boots and available to every
+            component via <code>nuxtApp.provide</code>.
           </p>
         </div>
 
