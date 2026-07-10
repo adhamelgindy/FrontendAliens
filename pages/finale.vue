@@ -19,10 +19,10 @@
       <!-- ── Drag puzzle ── -->
       <div class="puzzle">
 
-        <!-- File tray -->
-        <div class="puzzle__tray">
+        <!-- File tray (left) -->
+        <div class="puzzle__left">
           <div class="puzzle__tray-label font-mono">YOUR FILES</div>
-          <div class="puzzle__chips">
+          <div class="puzzle__tray">
             <div
               v-for="file in FILES"
               :key="file.id"
@@ -36,39 +36,40 @@
           </div>
         </div>
 
-        <!-- Record with drop zones -->
-        <div class="puzzle__record-area">
-          <div
-            class="puzzle__record"
-            :class="{ 'puzzle__record--solved': puzzleSolved }"
-          >
-            <div class="record" />
+        <!-- Project tree (right) -->
+        <div class="puzzle__right">
+          <div class="puzzle__tree-label font-mono">PROJECT STRUCTURE</div>
+          <div class="puzzle__tree">
+            <div class="tree-node">
+              <span class="tree-node__icon">📁</span>
+              <span class="tree-node__name">project-root/</span>
+            </div>
             <div
-              class="puzzle__record-glow"
-              :class="{ 'puzzle__record-glow--solved': puzzleSolved }"
-            />
-          </div>
-
-          <!-- Three drop zones orbiting the record -->
-          <div
-            v-for="slot in SLOTS"
-            :key="slot.id"
-            class="drop-slot"
-            :class="[
-              `drop-slot--${slot.position}`,
-              dragOver === slot.id ? 'drop-slot--over' : '',
-              slotFilled(slot.id) ? 'drop-slot--correct' : '',
-              slotWrong(slot.id) ? 'drop-slot--wrong' : '',
-            ]"
-            @dragover.prevent="dragOver = slot.id"
-            @dragleave="dragOver = null"
-            @drop="onDrop(slot.id)"
-          >
-            <span class="drop-slot__layer font-mono">{{ slot.label }}</span>
-            <span v-if="slotFilled(slot.id)" class="drop-slot__file font-mono">
-              📄 {{ getPlacedFile(slot.id)?.name }}
-            </span>
-            <span v-else class="drop-slot__empty text-muted">drop here</span>
+              v-for="folder in FOLDERS"
+              :key="folder.id"
+              class="tree-folder"
+              :class="[
+                dragOver === folder.id ? 'tree-folder--over' : '',
+                folderFilled(folder.id) ? 'tree-folder--filled' : '',
+              ]"
+              @dragover.prevent="dragOver = folder.id"
+              @dragleave="dragOver = null"
+              @drop="onDrop(folder.id)"
+            >
+              <span class="tree-folder__icon">📁</span>
+              <span class="tree-folder__name">{{ folder.name }}/</span>
+              <div v-if="getFilesInFolder(folder.id).length" class="tree-folder__contents">
+                <div
+                  v-for="file in getFilesInFolder(folder.id)"
+                  :key="file.id"
+                  class="tree-file"
+                  :class="{ 'tree-file--correct': folderCorrect(folder.id, file.id) }"
+                >
+                  <span class="tree-file__icon">📄</span>
+                  <span class="tree-file__name">{{ file.name }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -76,7 +77,7 @@
 
       <!-- Puzzle error -->
       <div v-if="showPuzzleError" class="alert alert--error">
-        <span>Wrong layer — a file is in the wrong slot. Check which layer each file belongs to.</span>
+        <span>Wrong folder — a file is in the wrong directory. Check which folder each file belongs to.</span>
       </div>
 
       <!-- Puzzle submit -->
@@ -277,72 +278,72 @@ const videoPlaying = ref(false)
 interface PuzzleFile {
   id: string
   name: string
-  answer: string   // slot id it belongs to
+  answer: string   // folder id it belongs to
 }
 
-interface PuzzleSlot {
+interface PuzzleFolder {
   id: string
-  label: string
-  position: 'top' | 'left' | 'right'
+  name: string
 }
 
 const FILES: PuzzleFile[] = [
-  { id: 'directive', name: 'signal-readout.vue',      answer: 'component' },
-  { id: 'module',    name: 'modules/signal.ts',        answer: 'module'    },
-  { id: 'plugin',    name: 'plugins/signalTracker.ts', answer: 'plugin'    },
+  { id: 'directive', name: 'signal-readout.vue',      answer: 'components' },
+  { id: 'module',    name: 'signal.ts',               answer: 'modules'    },
+  { id: 'plugin',    name: 'signalTracker.ts',        answer: 'plugins'    },
 ]
 
-const SLOTS: PuzzleSlot[] = [
-  { id: 'component', label: 'Component',     position: 'top'   },
-  { id: 'module',    label: 'Nuxt Module',   position: 'left'  },
-  { id: 'plugin',    label: 'Nuxt Plugin',   position: 'right' },
+const FOLDERS: PuzzleFolder[] = [
+  { id: 'components', name: 'components' },
+  { id: 'modules',    name: 'modules'    },
+  { id: 'plugins',    name: 'plugins'    },
 ]
 
-const placements   = ref<Record<string, string>>({})  // slotId → fileId
+const placements   = ref<Record<string, string>>({})  // folderId → fileId (can be multiple)
 const draggedId    = ref<string | null>(null)
 const dragOver     = ref<string | null>(null)
 const puzzleSolved = ref(false)
 const showPuzzleError = ref(false)
 
-const placedCount = computed(() => Object.keys(placements.value).length)
+const placedCount = computed(() => Object.values(placements.value).filter(Boolean).length)
 
 function isPlaced(fileId: string) {
   return Object.values(placements.value).includes(fileId)
 }
 
-function slotFilled(slotId: string) {
-  return puzzleSolved.value && slotId in placements.value
+function folderFilled(folderId: string) {
+  return puzzleSolved.value && folderId in placements.value
 }
 
-function slotWrong(slotId: string) {
-  return showPuzzleError.value && slotId in placements.value &&
-    FILES.find(f => f.id === placements.value[slotId])?.answer !== slotId
+function folderCorrect(folderId: string, fileId: string) {
+  const file = FILES.find(f => f.id === fileId)
+  return file?.answer === folderId
 }
 
-function getPlacedFile(slotId: string) {
-  const fileId = placements.value[slotId]
-  return fileId ? FILES.find(f => f.id === fileId) : null
+function getFilesInFolder(folderId: string) {
+  return FILES.filter(f => placements.value[f.id] === folderId)
 }
 
 function onDragStart(fileId: string) {
   draggedId.value = fileId
 }
 
-function onDrop(slotId: string) {
+function onDrop(folderId: string) {
   dragOver.value = null
   if (!draggedId.value) return
 
-  // Remove file from any existing slot
-  for (const s in placements.value) {
-    if (placements.value[s] === draggedId.value) delete placements.value[s]
+  // Remove file from any existing folder
+  for (const fileId of Object.keys(placements.value)) {
+    if (placements.value[fileId] === folderId) {
+      delete placements.value[fileId]
+    }
   }
-  placements.value[slotId] = draggedId.value
+  placements.value[draggedId.value] = folderId
   draggedId.value = null
   showPuzzleError.value = false
 }
 
 function checkPuzzle() {
-  const allCorrect = FILES.every(f => placements.value[f.answer] === f.id)
+  const allCorrect = FILES.every(f => placements.value[f.id] === f.answer)
   if (allCorrect) {
     puzzleSolved.value = true
     showPuzzleError.value = false
@@ -488,17 +489,17 @@ onMounted(() => {
 
 .puzzle {
   width: 100%;
+  max-width: 700px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
+  gap: 40px;
+  justify-content: space-between;
 }
 
-.puzzle__tray {
-  width: 100%;
+.puzzle__left {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 0 0 auto;
 }
 
 .puzzle__tray-label {
@@ -508,10 +509,10 @@ onMounted(() => {
   color: var(--muted);
 }
 
-.puzzle__chips {
+.puzzle__tray {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .file-chip {
@@ -525,6 +526,7 @@ onMounted(() => {
   cursor: grab;
   transition: opacity 0.2s, border-color 0.2s;
   user-select: none;
+  min-width: 200px;
 }
 
 .file-chip:hover {
@@ -537,92 +539,115 @@ onMounted(() => {
   pointer-events: none;
 }
 
-/* Record area */
-.puzzle__record-area {
-  position: relative;
-  width: 340px;
-  height: 340px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.puzzle__record {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.puzzle__record-glow {
-  position: absolute;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245,200,66,0.1) 0%, transparent 70%);
-  pointer-events: none;
-  transition: background 0.6s;
-}
-
-.puzzle__record-glow--solved {
-  background: radial-gradient(circle, rgba(245,200,66,0.35) 0%, transparent 70%);
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-/* Drop slots positioned around the record */
-.drop-slot {
-  position: absolute;
+.puzzle__right {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 14px;
-  min-width: 140px;
-  background: rgba(15,23,42,0.8);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  font-size: 0.75rem;
-  text-align: center;
-  transition: border-color 0.2s, background 0.2s;
+  gap: 10px;
+  flex: 1;
 }
 
-.drop-slot--top    { top: 0;    left: 50%; transform: translateX(-50%); }
-.drop-slot--left   { left: 0;   top: 50%;  transform: translateY(-50%); }
-.drop-slot--right  { right: 0;  top: 50%;  transform: translateY(-50%); }
-
-.drop-slot--over {
-  border-color: var(--gold);
-  background: rgba(245,200,66,0.08);
-}
-
-.drop-slot--correct {
-  border-color: var(--success);
-  border-style: solid;
-  background: rgba(34,197,94,0.08);
-}
-
-.drop-slot--wrong {
-  border-color: #e85a4a;
-  border-style: solid;
-  background: rgba(232,90,74,0.08);
-}
-
-.drop-slot__layer {
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+.puzzle__tree-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-.drop-slot__file {
-  font-size: 0.72rem;
-  color: var(--green);
+.puzzle__tree {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.drop-slot__empty {
-  font-size: 0.72rem;
-  font-style: italic;
+.tree-node {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-family: var(--mono);
+  padding: 6px 0;
+}
+
+.tree-node__icon {
+  font-size: 0.9rem;
+}
+
+.tree-node__name {
+  font-weight: 500;
+}
+
+.tree-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-left: 20px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 40px;
+}
+
+.tree-folder--over {
+  border-color: var(--gold);
+  background: rgba(245, 200, 66, 0.08);
+}
+
+.tree-folder--filled {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.tree-folder > :first-child {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.82rem;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.tree-folder__icon {
+  font-size: 0.9rem;
+}
+
+.tree-folder__name {
+  font-weight: 500;
+}
+
+.tree-folder__contents {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tree-file {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  color: var(--muted);
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.tree-file--correct {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.tree-file__icon {
+  font-size: 0.75rem;
+}
+
+.tree-file__name {
+  word-break: break-all;
 }
 
 .puzzle__actions {
