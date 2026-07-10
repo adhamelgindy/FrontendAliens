@@ -21,17 +21,16 @@
       <template v-else>
         <!-- Header -->
         <div class="level-page__header">
-          <p class="eyebrow">Mission Config Corrupted</p>
+          <p class="eyebrow">Runtime Gap</p>
           <h1 class="level-page__title font-title">
-            Level 03 — Build Layer
+            Level 03 — Inject as a Plugin
           </h1>
           <p class="level-page__narrative">
-            The final transmission can't launch. nuxt.config.ts has three
-            faults: a module loaded in the wrong slot, a public API key buried
-            where the browser can't reach it, and a malformed HTML head. Fix
-            them. Remember: this file runs at build time — not at runtime.
-            Modules configure how Nuxt builds your app. Plugins (plugins/) run
-            after the build, when the app boots. Components run last, per-render.
+            The layers are classified, but the signal still isn't reaching the
+            components. Modules only run at build time — anything they set up
+            disappears before the app boots. Rewrite the beacon as a Nuxt plugin
+            so it initialises at runtime and is injected into every component
+            via <code>nuxtApp.provide</code>.
           </p>
         </div>
 
@@ -42,30 +41,30 @@
         <div class="test-panel card">
           <div class="test-panel__header font-mono">
             <span class="text-muted" style="font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;">
-              Build Validator
+              Plugin Validator
             </span>
           </div>
           <div class="test-panel__cases">
             <div
-              :class="['test-case', buildChecks.modules ? 'test-case--pass' : 'test-case--fail']"
+              :class="['test-case', buildChecks.exported ? 'test-case--pass' : 'test-case--fail']"
             >
-              <span class="test-case__icon">{{ buildChecks.modules ? '✓' : '✗' }}</span>
-              <span class="test-case__label">modules: ['@nuxtjs/color-mode']</span>
-              <span class="test-case__expect text-muted">— module in wrong array</span>
+              <span class="test-case__icon">{{ buildChecks.exported ? '✓' : '✗' }}</span>
+              <span class="test-case__label">export default defineNuxtPlugin(...)</span>
+              <span class="test-case__expect text-muted">— plugin not exported</span>
             </div>
             <div
-              :class="['test-case', buildChecks.publicKey ? 'test-case--pass' : 'test-case--fail']"
+              :class="['test-case', buildChecks.nuxtApp ? 'test-case--pass' : 'test-case--fail']"
             >
-              <span class="test-case__icon">{{ buildChecks.publicKey ? '✓' : '✗' }}</span>
-              <span class="test-case__label">runtimeConfig.public.voyagerApiBase</span>
-              <span class="test-case__expect text-muted">— key must be public</span>
+              <span class="test-case__icon">{{ buildChecks.nuxtApp ? '✓' : '✗' }}</span>
+              <span class="test-case__label">defineNuxtPlugin((nuxtApp) => ...)</span>
+              <span class="test-case__expect text-muted">— nuxtApp argument missing</span>
             </div>
             <div
-              :class="['test-case', buildChecks.headMeta ? 'test-case--pass' : 'test-case--fail']"
+              :class="['test-case', buildChecks.provide ? 'test-case--pass' : 'test-case--fail']"
             >
-              <span class="test-case__icon">{{ buildChecks.headMeta ? '✓' : '✗' }}</span>
-              <span class="test-case__label">app.head.meta: [{ name: 'theme-color' }]</span>
-              <span class="test-case__expect text-muted">— head meta malformed</span>
+              <span class="test-case__icon">{{ buildChecks.provide ? '✓' : '✗' }}</span>
+              <span class="test-case__label">nuxtApp.provide('beacon', ...)</span>
+              <span class="test-case__expect text-muted">— beacon not injected</span>
             </div>
           </div>
         </div>
@@ -73,9 +72,9 @@
         <!-- Editor -->
         <div class="level-page__editor-wrap">
           <div class="level-page__editor-label font-mono">
-            <span class="text-orange">nuxt.config.ts</span>
+            <span class="text-orange">plugins/beacon.ts</span>
             <span class="text-muted" style="margin-left:auto; font-size:0.7rem;">
-              Fix the build configuration
+              Implement the plugin
             </span>
           </div>
           <textarea
@@ -95,17 +94,17 @@
 
         <!-- Hint -->
         <div v-if="showHint" class="alert alert--hint">
-          <span>Hint: In Nuxt, `modules` is for build-time integrations — `plugins` is for runtime-only files in your `plugins/` folder. For values your browser components need to read, they must live under `runtimeConfig.public` — anything at the root of `runtimeConfig` is server-only. `app.head` accepts standard HTML meta as an array of objects: `meta: [{ name: '...', content: '...' }]`.</span>
+          <span>Hint: A Nuxt plugin must be exported with <code>export default defineNuxtPlugin((nuxtApp) =&gt; {})</code>. The <code>nuxtApp</code> argument gives you access to <code>nuxtApp.provide('key', value)</code>, which injects the value into every component as <code>$key</code>. Use <code>useScript(url)</code> to load the beacon script.</span>
         </div>
 
         <!-- Error feedback -->
         <div v-if="showError && !isCorrect" class="alert alert--error">
-          <span>Config validation failed — check modules array, runtimeConfig.public, and app.head.meta.</span>
+          <span>Plugin validation failed — check the export, the nuxtApp parameter, and the provide call.</span>
         </div>
 
         <!-- Success banner -->
         <div v-if="isCorrect" class="alert alert--success">
-          <span>BUILD VALIDATED — BUILD LAYER RESTORED. Golden Record restored. Initiating finale sequence…</span>
+          <span>✧ PLUGIN INJECTED — GOLDEN RECORD FULLY RESTORED ✧ The beacon is live. Initiating finale sequence…</span>
         </div>
 
         <!-- Actions -->
@@ -147,30 +146,16 @@ const game   = useGame()
 
 const locked = computed(() => !game.canAccessLevel(3))
 
-const BROKEN_CODE = `// nuxt.config.ts
-export default defineNuxtConfig({
-  plugins: ['@nuxtjs/color-mode'],
-  runtimeConfig: {
-    voyagerApiBase: 'https://api.voyager.space',
-  },
-  app: {
-    themeColor: '#0d1b2e',
-  },
+const BROKEN_CODE = `// plugins/beacon.ts
+export default defineNuxtPlugin(() => {
+  // TODO: initialize the beacon using useScript
+  // TODO: provide it to the app as 'beacon'
 })`
 
-const CORRECT_CODE = `// nuxt.config.ts
-export default defineNuxtConfig({
-  modules: ['@nuxtjs/color-mode'],
-  runtimeConfig: {
-    public: {
-      voyagerApiBase: 'https://api.voyager.space',
-    },
-  },
-  app: {
-    head: {
-      meta: [{ name: 'theme-color', content: '#0d1b2e' }],
-    },
-  },
+const CORRECT_CODE = `// plugins/beacon.ts
+export default defineNuxtPlugin((nuxtApp) => {
+  const beacon = useScript('https://beacon.voyager.space/signal.js')
+  nuxtApp.provide('beacon', beacon)
 })`
 
 const userCode  = ref(BROKEN_CODE)
@@ -182,13 +167,13 @@ function normalize(s: string): string {
   return s.replace(/\s+/g, ' ').trim()
 }
 
-// Parse current config to check structure on every keystroke
+// Check plugin structure on every keystroke
 const buildChecks = computed(() => {
   const c = userCode.value
   return {
-    modules: /modules\s*:\s*\[/.test(c) && /modules[\s\S]*?color-mode/.test(c),
-    publicKey: /public\s*:\s*\{[\s\S]*?voyagerApiBase/.test(c),
-    headMeta: /meta\s*:\s*\[[\s\S]*?theme-color/.test(c),
+    exported: /export\s+default\s+defineNuxtPlugin/.test(c),
+    nuxtApp: /defineNuxtPlugin\s*\(\s*\(nuxtApp\)/.test(c),
+    provide: /nuxtApp\.provide\s*\(/.test(c),
   }
 })
 
