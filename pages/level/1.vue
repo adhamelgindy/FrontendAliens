@@ -12,12 +12,12 @@
 
       <!-- Header -->
       <div class="level-page__header">
-        <p class="eyebrow">Warmup Challenge</p>
+        <p class="eyebrow">First Attempt</p>
         <h1 class="level-page__title font-title">
-          Level 01 — Restore the Golden Record Signal
+          Level 01 — Build the Signal Directive
         </h1>
         <p class="level-page__narrative">
-          The Golden Record aboard Voyager 1 was damaged before your crew recovered it. One of the corrupted systems is responsible for displaying the strength of the incoming transmission. Implement the v-signal directive so the application can correctly visualize the transmission signal.
+          The Golden Record aboard Voyager 1 is degraded. The signal strength visualization is broken — a custom v-signal directive that should display transmission strength is incomplete. Implement it to get the signal bar working. This is your first step to restoring Voyager 1.
         </p>
       </div>
 
@@ -90,14 +90,14 @@
 
       <!-- Success banner -->
       <div v-if="isCorrect" class="alert alert--success">
-        <span>✧ SIGNAL LOCKED — GOLDEN RECORD RESTORED ✧</span>
+        <span>✧ SIGNAL LOCKED — FIRST LAYER RESTORED ✧</span>
       </div>
 
       <!-- Success celebration -->
       <div v-if="isCorrect" class="success-celebration">
         <div class="celebration-content">
-          <h3 class="celebration-title">Transmission Status: ACTIVE</h3>
-          <p class="celebration-text">The Golden Record signal is now being tracked across the cosmos. Watch as it responds to signal strength changes.</p>
+          <h3 class="celebration-title">Directive Active — Signal Streaming</h3>
+          <p class="celebration-text">The signal bar is working and responsive. But the crew warns that this is just the visualization layer. The real problem is deeper — the signal itself isn't being properly configured. Continue to Level 02 to see what's actually broken.</p>
 
           <!-- Live signal visualization -->
           <div class="celebration-signal-demo">
