@@ -126,17 +126,22 @@
       </div>
 
       <!-- Mission log -->
-      <div class="mission-log card">
+      <div class="mission-log card" ref="logRef">
         <div class="mission-log__header font-mono">
-          Mission Log — Transmission Record
+          {{ typedHeader }}<span v-if="typingHeader" class="cursor">▌</span>
         </div>
         <div class="mission-log__entries">
-          <div class="log-entry" v-for="entry in logEntries" :key="entry.time">
-            <span class="log-entry__time font-mono text-muted">{{ entry.time }}</span>
+          <div
+            v-for="(entry, i) in logEntries"
+            :key="entry.time"
+            class="log-entry"
+            :class="{ 'log-entry--visible': i < visibleEntries }"
+          >
+            <span class="log-entry__time font-mono text-muted">{{ typed[i]?.time ?? '' }}<span v-if="typingEntry === i && typingField === 'time'" class="cursor">▌</span></span>
             <span :class="['log-entry__status', 'font-mono', entry.statusClass]">
-              {{ entry.status }}
+              {{ typed[i]?.status ?? '' }}<span v-if="typingEntry === i && typingField === 'status'" class="cursor">▌</span>
             </span>
-            <span class="log-entry__msg">{{ entry.msg }}</span>
+            <span class="log-entry__msg">{{ typed[i]?.msg ?? '' }}<span v-if="typingEntry === i && typingField === 'msg'" class="cursor">▌</span></span>
           </div>
         </div>
       </div>
@@ -390,6 +395,78 @@ function handlePlayAgain() {
   game.resetGame()
   router.push('/')
 }
+
+// ── Mission log typewriter ────────────────────────────────────────────────
+
+const HEADER_TEXT = 'Mission Log — Transmission Record'
+const CHAR_DELAY  = 28   // ms per character
+const ENTRY_GAP   = 120  // ms pause between entries
+
+const logRef       = ref<HTMLElement | null>(null)
+const typedHeader  = ref('')
+const typingHeader = ref(false)
+const visibleEntries = ref(0)
+const typingEntry  = ref<number | null>(null)
+const typingField  = ref<'time' | 'status' | 'msg' | null>(null)
+
+const typed = ref<{ time: string; status: string; msg: string }[]>(
+  logEntries.map(() => ({ time: '', status: '', msg: '' }))
+)
+
+function typeString(setter: (v: string) => void, full: string): Promise<void> {
+  return new Promise(resolve => {
+    let i = 0
+    function step() {
+      setter(full.slice(0, i))
+      if (i++ <= full.length) setTimeout(step, CHAR_DELAY)
+      else resolve()
+    }
+    step()
+  })
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function startTypewriter() {
+  typingHeader.value = true
+  await typeString(v => { typedHeader.value = v }, HEADER_TEXT)
+  typingHeader.value = false
+  await wait(ENTRY_GAP)
+
+  for (let i = 0; i < logEntries.length; i++) {
+    const entry = logEntries[i]
+    const row   = typed.value[i]
+    visibleEntries.value = i + 1
+    typingEntry.value    = i
+
+    typingField.value = 'time'
+    await typeString(v => { row.time = v }, entry.time)
+    typingField.value = 'status'
+    await typeString(v => { row.status = v }, entry.status)
+    typingField.value = 'msg'
+    await typeString(v => { row.msg = v }, entry.msg)
+
+    typingEntry.value = null
+    typingField.value = null
+    await wait(ENTRY_GAP)
+  }
+}
+
+onMounted(() => {
+  if (!logRef.value) return
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        observer.disconnect()
+        startTypewriter()
+      }
+    },
+    { threshold: 0.2 },
+  )
+  observer.observe(logRef.value)
+})
 </script>
 
 <style scoped>
@@ -669,11 +746,28 @@ function handlePlayAgain() {
 }
 
 .log-entry {
-  display: flex;
+  display: none;
   gap: 14px;
   align-items: baseline;
   flex-wrap: wrap;
   font-size: 0.83rem;
+}
+
+.log-entry--visible {
+  display: flex;
+}
+
+.cursor {
+  display: inline-block;
+  animation: blink-cursor 0.7s step-end infinite;
+  color: var(--green);
+  font-weight: 400;
+  margin-left: 1px;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
 .log-entry__time {
