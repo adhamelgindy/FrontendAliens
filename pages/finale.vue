@@ -3,23 +3,111 @@
     <div class="container finale__inner">
 
       <!-- Eyebrow -->
-      <p class="eyebrow finale__eyebrow">Mission Complete</p>
+      <p class="eyebrow finale__eyebrow">Final Assembly</p>
 
-      <!-- Spinning record -->
-      <div class="finale__record-wrap">
-        <div class="record" />
-        <div class="finale__record-glow" />
+      <!-- Intro -->
+      <div class="finale__intro">
+        <h1 class="finale__title font-title">
+          Slot the Files<br />
+          <span class="finale__title--accent">Into the Record</span>
+        </h1>
+        <p class="finale__subtitle-pre font-mono">
+          Three layers. Three files. One record.
+        </p>
       </div>
 
-      <!-- Headline -->
-      <h1 class="finale__title font-title">
-        Golden Record<br />
-        <span class="finale__title--accent">Restored</span>
-      </h1>
+      <!-- ── Drag puzzle ── -->
+      <div class="puzzle">
 
-      <p class="finale__subtitle">
-        Voyager 1 — Back Online Forever
-      </p>
+        <!-- File tray -->
+        <div class="puzzle__tray">
+          <div class="puzzle__tray-label font-mono">YOUR FILES</div>
+          <div class="puzzle__chips">
+            <div
+              v-for="file in FILES"
+              :key="file.id"
+              class="file-chip"
+              :class="{ 'file-chip--placed': isPlaced(file.id) }"
+              draggable="true"
+              @dragstart="onDragStart(file.id)"
+            >
+              📄 {{ file.name }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Record with drop zones -->
+        <div class="puzzle__record-area">
+          <div
+            class="puzzle__record"
+            :class="{ 'puzzle__record--solved': puzzleSolved }"
+          >
+            <div class="record" />
+            <div
+              class="puzzle__record-glow"
+              :class="{ 'puzzle__record-glow--solved': puzzleSolved }"
+            />
+          </div>
+
+          <!-- Three drop zones orbiting the record -->
+          <div
+            v-for="slot in SLOTS"
+            :key="slot.id"
+            class="drop-slot"
+            :class="[
+              `drop-slot--${slot.position}`,
+              dragOver === slot.id ? 'drop-slot--over' : '',
+              slotFilled(slot.id) ? 'drop-slot--correct' : '',
+              slotWrong(slot.id) ? 'drop-slot--wrong' : '',
+            ]"
+            @dragover.prevent="dragOver = slot.id"
+            @dragleave="dragOver = null"
+            @drop="onDrop(slot.id)"
+          >
+            <span class="drop-slot__layer font-mono">{{ slot.label }}</span>
+            <span v-if="slotFilled(slot.id)" class="drop-slot__file font-mono">
+              📄 {{ getPlacedFile(slot.id)?.name }}
+            </span>
+            <span v-else class="drop-slot__empty text-muted">drop here</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Puzzle error -->
+      <div v-if="showPuzzleError" class="alert alert--error">
+        <span>Wrong layer — a file is in the wrong slot. Check which layer each file belongs to.</span>
+      </div>
+
+      <!-- Puzzle submit -->
+      <div v-if="!puzzleSolved" class="puzzle__actions">
+        <button class="btn btn--ghost" @click="resetPuzzle">Reset</button>
+        <button
+          class="btn btn--primary"
+          :disabled="placedCount !== 3"
+          @click="checkPuzzle"
+        >
+          ▶ Transmit Assembly
+        </button>
+      </div>
+
+      <!-- ── Reveal ── -->
+      <template v-if="puzzleSolved">
+
+      <!-- Record restored headline -->
+      <div class="finale__reveal">
+        <div class="finale__record-wrap">
+          <div class="record" />
+          <div class="finale__record-glow" />
+        </div>
+        <h2 class="finale__reveal-title font-title">
+          Golden Record<br />
+          <span class="finale__title--accent">Restored</span>
+        </h2>
+        <p class="finale__subtitle">
+          Voyager 1 — Back Online Forever
+        </p>
+      </div>
 
       <!-- Stats row -->
       <div class="stat-row finale__stats">
@@ -167,6 +255,8 @@
         </p>
       </footer>
 
+      </template><!-- end puzzleSolved reveal -->
+
     </div>
   </div>
 </template>
@@ -177,24 +267,110 @@ const game   = useGame()
 
 const videoPlaying = ref(false)
 
+// ── Drag-and-drop puzzle ──────────────────────────────────────────────────
+
+interface PuzzleFile {
+  id: string
+  name: string
+  answer: string   // slot id it belongs to
+}
+
+interface PuzzleSlot {
+  id: string
+  label: string
+  position: 'top' | 'left' | 'right'
+}
+
+const FILES: PuzzleFile[] = [
+  { id: 'directive', name: 'signal-readout.vue',      answer: 'component' },
+  { id: 'module',    name: 'modules/signal.ts',        answer: 'module'    },
+  { id: 'plugin',    name: 'plugins/signalTracker.ts', answer: 'plugin'    },
+]
+
+const SLOTS: PuzzleSlot[] = [
+  { id: 'component', label: 'Component',     position: 'top'   },
+  { id: 'module',    label: 'Nuxt Module',   position: 'left'  },
+  { id: 'plugin',    label: 'Nuxt Plugin',   position: 'right' },
+]
+
+const placements   = ref<Record<string, string>>({})  // slotId → fileId
+const draggedId    = ref<string | null>(null)
+const dragOver     = ref<string | null>(null)
+const puzzleSolved = ref(false)
+const showPuzzleError = ref(false)
+
+const placedCount = computed(() => Object.keys(placements.value).length)
+
+function isPlaced(fileId: string) {
+  return Object.values(placements.value).includes(fileId)
+}
+
+function slotFilled(slotId: string) {
+  return puzzleSolved.value && slotId in placements.value
+}
+
+function slotWrong(slotId: string) {
+  return showPuzzleError.value && slotId in placements.value &&
+    FILES.find(f => f.id === placements.value[slotId])?.answer !== slotId
+}
+
+function getPlacedFile(slotId: string) {
+  const fileId = placements.value[slotId]
+  return fileId ? FILES.find(f => f.id === fileId) : null
+}
+
+function onDragStart(fileId: string) {
+  draggedId.value = fileId
+}
+
+function onDrop(slotId: string) {
+  dragOver.value = null
+  if (!draggedId.value) return
+
+  // Remove file from any existing slot
+  for (const s in placements.value) {
+    if (placements.value[s] === draggedId.value) delete placements.value[s]
+  }
+  placements.value[slotId] = draggedId.value
+  draggedId.value = null
+  showPuzzleError.value = false
+}
+
+function checkPuzzle() {
+  const allCorrect = FILES.every(f => placements.value[f.answer] === f.id)
+  if (allCorrect) {
+    puzzleSolved.value = true
+    showPuzzleError.value = false
+  } else {
+    showPuzzleError.value = true
+  }
+}
+
+function resetPuzzle() {
+  placements.value = {}
+  showPuzzleError.value = false
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+
 const logEntries = [
   {
     time:        'T+00:00:01',
     status:      'REPAIRED',
     statusClass: 'text-green',
-    msg:         'Component boot layer — reactive state initialised via ref() and computed()',
+    msg:         'signal-readout.vue — v-signal directive implemented, signal bar responding',
   },
   {
     time:        'T+00:00:02',
     status:      'REPAIRED',
     statusClass: 'text-green',
-    msg:         'Plugin bay — signal formatter injected via defineNuxtPlugin and nuxtApp.provide()',
+    msg:         'modules/signal.ts — defineNuxtModule registered signalTracker at build time',
   },
   {
     time:        'T+00:00:03',
     status:      'REPAIRED',
     statusClass: 'text-green',
-    msg:         'Build config — modules, runtimeConfig.public, and app.head.meta corrected',
+    msg:         'plugins/signalTracker.ts — defineNuxtPlugin injected tracker into every component',
   },
   {
     time:        'T+00:00:04',
@@ -217,6 +393,191 @@ function handlePlayAgain() {
 </script>
 
 <style scoped>
+/* ── Puzzle ─────────────────────────────────────────────────────────────── */
+
+.finale__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.finale__subtitle-pre {
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.puzzle {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.puzzle__tray {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.puzzle__tray-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.puzzle__chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.file-chip {
+  padding: 8px 14px;
+  background: var(--navy-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--text);
+  cursor: grab;
+  transition: opacity 0.2s, border-color 0.2s;
+  user-select: none;
+}
+
+.file-chip:hover {
+  border-color: var(--gold);
+}
+
+.file-chip--placed {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Record area */
+.puzzle__record-area {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.puzzle__record {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.puzzle__record-glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,200,66,0.1) 0%, transparent 70%);
+  pointer-events: none;
+  transition: background 0.6s;
+}
+
+.puzzle__record-glow--solved {
+  background: radial-gradient(circle, rgba(245,200,66,0.35) 0%, transparent 70%);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Drop slots positioned around the record */
+.drop-slot {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  min-width: 140px;
+  background: rgba(15,23,42,0.8);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.drop-slot--top    { top: 0;    left: 50%; transform: translateX(-50%); }
+.drop-slot--left   { left: 0;   top: 50%;  transform: translateY(-50%); }
+.drop-slot--right  { right: 0;  top: 50%;  transform: translateY(-50%); }
+
+.drop-slot--over {
+  border-color: var(--gold);
+  background: rgba(245,200,66,0.08);
+}
+
+.drop-slot--correct {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(34,197,94,0.08);
+}
+
+.drop-slot--wrong {
+  border-color: #e85a4a;
+  border-style: solid;
+  background: rgba(232,90,74,0.08);
+}
+
+.drop-slot__layer {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.drop-slot__file {
+  font-size: 0.72rem;
+  color: var(--green);
+}
+
+.drop-slot__empty {
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.puzzle__actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Reveal section */
+.finale__reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fade-in 0.8s ease both;
+}
+
+.finale__reveal-title {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  text-align: center;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Original finale styles ─────────────────────────────────────────────── */
+
 .finale {
   flex: 1;
   padding: 64px 0 100px;
