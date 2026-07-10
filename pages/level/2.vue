@@ -36,17 +36,18 @@
         <!-- Header -->
         <div class="level-page__header">
           <p class="eyebrow">
-            Architecture Distortion
+            Build-Time Meltdown
           </p>
 
           <h1 class="level-page__title font-title">
-            Level 02 — Turn plugin documentation into a game  
+            Level 02 — Identify the Right Layer
           </h1>
 
           <p class="level-page__narrative">
-            The Golden Record system is still unstable. Code is running in the
-            wrong layers and files are scattered across the wrong directories.
-            Classify each fragment, then restore the project structure.
+            The directive works, but the build is stalling. The ship's compiler
+            reports that code is running in the wrong layers — modules, plugins,
+            and scripts are all mixed up. Classify each fragment so the system
+            knows when each piece runs. Then restore the project file structure.
           </p>
         </div>
 
@@ -264,10 +265,10 @@
           class="alert alert--hint"
         >
           <span>
-            Plugins live in <code>plugins/</code> and run when the app starts.
-            Modules live in <code>modules/</code> and configure Nuxt at build
-            time. <code>useScript()</code> is used inside Vue components—not in
-            a dedicated folder.
+            <strong>Module</strong> — runs once at build time to configure Nuxt before the app exists.
+            <strong>Plugin</strong> — runs at app-boot to inject things every component can use.
+            <strong>Script</strong> — loaded in the browser via <code>useScript()</code>, not a dedicated folder.
+            Files: plugins go in <code>plugins/</code>, modules in <code>modules/</code>, components in <code>components/</code>.
           </span>
         </div>
 
@@ -278,8 +279,7 @@
           class="alert alert--error"
         >
           <span>
-            Architecture mismatch detected — check highlighted cards and file
-            placements.
+            Layer mismatch detected — some fragments are in the wrong category or files are in the wrong folder.
           </span>
         </div>
 
@@ -290,8 +290,8 @@
           class="alert alert--success"
         >
           <span>
-            ✧ ARCHITECTURE RESTORED ✧ Runtime layers synchronized. Project
-            structure repaired.
+            ✧ LAYERS CLASSIFIED — BUILD STABILIZED ✧ The compiler can see which
+            code runs when. Continue to Level 03 to wire it all together.
           </span>
         </div>
 
