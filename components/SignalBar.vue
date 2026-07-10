@@ -1,15 +1,6 @@
 <template>
-  <div class="signal-bar">
-    <div class="signal-bar__header">
-      <span class="signal-bar__label">Signal Strength</span>
-      <span class="signal-bar__pct font-mono">{{ displayPct }}%</span>
-    </div>
-    <div class="signal-track">
-      <div class="signal-fill" :style="{ width: displayPct + '%' }" />
-    </div>
-    <div class="signal-bar__status">
-      <span :class="statusClass">{{ statusText }}</span>
-    </div>
+  <div class="status-bar">
+    <div class="status-indicator" :style="indicatorStyle" />
   </div>
 </template>
 
@@ -22,80 +13,62 @@ const props = withDefaults(defineProps<{
   correct: false,
 })
 
-// Animate the displayed percentage toward props.percent
-const displayPct = ref(0)
+const indicatorStyle = computed(() => {
+  let backgroundColor: string
+  if (props.correct) {
+    backgroundColor = 'var(--green)'
+  } else if (props.percent >= 80) {
+    backgroundColor = 'var(--green)'
+  } else if (props.percent >= 40) {
+    backgroundColor = 'var(--gold)'
+  } else {
+    backgroundColor = 'var(--orange)'
+  }
 
-onMounted(() => {
-  watch(
-    () => props.percent,
-    (target) => {
-      const start = displayPct.value
-      const delta = target - start
-      const steps = 40
-      let   step  = 0
-      const interval = setInterval(() => {
-        step++
-        displayPct.value = Math.round(start + delta * (step / steps))
-        if (step >= steps) {
-          displayPct.value = target
-          clearInterval(interval)
-        }
-      }, 15)
-    },
-    { immediate: true },
-  )
+  const animation = props.percent < 20 && !props.correct ? 'blink 0.5s infinite' : 'none'
+
+  return {
+    backgroundColor,
+    animation,
+  }
 })
 
-const statusText = computed(() => {
-  if (props.correct)       return 'SIGNAL LOCK ACQUIRED'
-  if (props.percent >= 80) return 'STRONG SIGNAL'
-  if (props.percent >= 40) return 'WEAK SIGNAL'
-  return 'NO SIGNAL'
-})
-
-const statusClass = computed(() => ({
-  'signal-bar__status-text': true,
-  'text-green':  props.correct || props.percent >= 80,
-  'text-gold':   !props.correct && props.percent >= 40 && props.percent < 80,
-  'text-muted':  !props.correct && props.percent < 40,
-}))
 </script>
 
 <style scoped>
-.signal-bar {
+.status-bar {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.signal-bar__header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
 
-.signal-bar__label {
+.status-bar__content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.status-text {
   font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
-}
-
-.signal-bar__pct {
-  font-size: 0.8rem;
   color: var(--text);
 }
 
-.signal-bar__status {
-  min-height: 18px;
-}
-
-.signal-bar__status-text {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition: color 0.4s;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 </style>
