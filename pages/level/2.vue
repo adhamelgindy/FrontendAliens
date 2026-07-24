@@ -22,43 +22,38 @@
 
         <!-- Header -->
         <div class="level-page__header">
-          <p class="eyebrow">Build-Time Meltdown</p>
+          <p class="eyebrow">Runtime Integration</p>
           <h1 class="level-page__title font-title">
-            Level 02 — Rewrite as a Module
+            Level 02 — Write the Plugin
           </h1>
           <p class="level-page__narrative">
-            The directive worked, but it's running inside a component — nothing
-            is configured at the Nuxt layer. Rewrite the signal tracker as a Nuxt
-            module so Nuxt itself registers it during startup, before any
-            component exists.
+            The composable works but calling it directly from components means re-initializing the tracker on every page. Wrap it in a Nuxt plugin so it boots once at app startup and is available everywhere via $signalTracker.
           </p>
         </div>
 
         <!-- Signal bar -->
         <SignalBar :percent="signalPercent" :correct="isCorrect" />
 
-        <!-- Module Validator panel -->
+        <!-- Plugin Validator panel -->
         <div class="test-panel card">
           <div class="test-panel__header font-mono">
-            <span class="text-muted" style="font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;">
-              Module Validator
-            </span>
+            Plugin Validator
           </div>
           <div class="test-panel__cases">
-            <div :class="['test-case', moduleChecks.exported ? 'test-case--pass' : 'test-case--fail']">
-              <span class="test-case__icon">{{ moduleChecks.exported ? '✓' : '✗' }}</span>
-              <span class="test-case__label">export default defineNuxtModule(...)</span>
-              <span class="test-case__expect text-muted">— module not exported</span>
+            <div :class="['test-case', pluginChecks.composable ? 'test-case--pass' : 'test-case--fail']">
+              <span class="test-case__icon">{{ pluginChecks.composable ? '✓' : '✗' }}</span>
+              <span class="test-case__label">useSignalTracker() called</span>
+              <span class="test-case__expect">— composable not called</span>
             </div>
-            <div :class="['test-case', moduleChecks.hook ? 'test-case--pass' : 'test-case--fail']">
-              <span class="test-case__icon">{{ moduleChecks.hook ? '✓' : '✗' }}</span>
-              <span class="test-case__label">nuxt.hook('modules:done', ...)</span>
-              <span class="test-case__expect text-muted">— hook not registered</span>
+            <div :class="['test-case', pluginChecks.setup ? 'test-case--pass' : 'test-case--fail']">
+              <span class="test-case__icon">{{ pluginChecks.setup ? '✓' : '✗' }}</span>
+              <span class="test-case__label">setup() function defined</span>
+              <span class="test-case__expect">— setup missing</span>
             </div>
-            <div :class="['test-case', moduleChecks.addPlugin ? 'test-case--pass' : 'test-case--fail']">
-              <span class="test-case__icon">{{ moduleChecks.addPlugin ? '✓' : '✗' }}</span>
-              <span class="test-case__label">addPlugin('./runtime/signalTracker.plugin')</span>
-              <span class="test-case__expect text-muted">— plugin not registered</span>
+            <div :class="['test-case', pluginChecks.provide ? 'test-case--pass' : 'test-case--fail']">
+              <span class="test-case__icon">{{ pluginChecks.provide ? '✓' : '✗' }}</span>
+              <span class="test-case__label">provide: { signalTracker: ... }</span>
+              <span class="test-case__expect">— tracker not provided</span>
             </div>
           </div>
         </div>
@@ -66,10 +61,7 @@
         <!-- Editor -->
         <div class="level-page__editor-wrap">
           <div class="level-page__editor-label font-mono">
-            <span class="text-orange">modules/signal.ts</span>
-            <span class="text-muted" style="margin-left:auto; font-size:0.7rem;">
-              Implement the module
-            </span>
+            plugins/signal-tracker.ts
           </div>
           <textarea
             v-model="userCode"
@@ -88,17 +80,26 @@
 
         <!-- Hint -->
         <div v-if="showHint" class="alert alert--hint">
-          <span>Hint: A Nuxt module exports <code>defineNuxtModule({ meta, setup(options, nuxt) })</code>. Inside <code>setup</code>, use <code>nuxt.hook('modules:done', () => { ... })</code> to register logic that runs after all modules load. Use <code>addPlugin(path)</code> to tell Nuxt to include a plugin file.</span>
+          <span>
+            <strong>Hint:</strong> Call <code>useSignalTracker()</code> to get the tracker instance. Then use <code>useRouter()</code> to get the router. Chain <code>router.afterEach((to) => { ... })</code> to capture route changes. Finally, return an object with <code>provide: { signalTracker: tracker }</code> to make it available app-wide.
+          </span>
         </div>
 
         <!-- Error feedback -->
         <div v-if="showError && !isCorrect" class="alert alert--error">
-          <span>Module validation failed — check the export, the hook call, and addPlugin.</span>
+          <span>Plugin validation failed — check that you're calling the composable, wiring the router hook, and providing the tracker.</span>
         </div>
 
         <!-- Success -->
         <div v-if="isCorrect" class="alert alert--success">
-          <span>✧ MODULE REGISTERED — BUILD CONFIGURED ✧ Nuxt knows about the signal tracker now. Continue to Level 03 to make it available at runtime.</span>
+          <span>✧ PLUGIN INITIALIZED — RUNTIME LAYER RESTORED ✧</span>
+        </div>
+
+        <!-- Success bridge -->
+        <div v-if="isCorrect" class="bridge-box card">
+          <p class="bridge-text">
+            The plugin runs — but it's crashing on first load. useRouter() is being called before the router is ready. Another plugin owns the router, and signal-tracker is loading before it. Level 03 fixes this by declaring plugin dependencies.
+          </p>
         </div>
 
         <!-- Actions -->
@@ -140,26 +141,22 @@ const game = useGame()
 
 const locked = computed(() => !game.canAccessLevel(2))
 
-const BROKEN_CODE = `// modules/signal.ts
-export default defineNuxtModule({
-  meta: {
-    name: 'signal-tracker',
-  },
-  setup(options, nuxt) {
-    // TODO: hook into 'modules:done'
-    // TODO: inside the hook, call addPlugin with the signalTracker path
+const BROKEN_CODE = `export default defineNuxtPlugin({
+  name: 'signal-tracker',
+  setup() {
+    // TODO: call useSignalTracker to get the tracker instance
+    // TODO: wire router.afterEach to call tracker.capture on each route change
+    // TODO: provide it as 'signalTracker'
   },
 })`
 
-const CORRECT_CODE = `// modules/signal.ts
-export default defineNuxtModule({
-  meta: {
-    name: 'signal-tracker',
-  },
-  setup(options, nuxt) {
-    nuxt.hook('modules:done', () => {
-      addPlugin('./runtime/signalTracker.plugin')
-    })
+const CORRECT_CODE = `export default defineNuxtPlugin({
+  name: 'signal-tracker',
+  setup() {
+    const { tracker } = useSignalTracker()
+    return {
+      provide: { signalTracker: tracker },
+    }
   },
 })`
 
@@ -172,16 +169,16 @@ function normalize(s: string): string {
   return s.replace(/\s+/g, ' ').trim()
 }
 
-const moduleChecks = computed(() => {
+const pluginChecks = computed(() => {
   const c = userCode.value
   return {
-    exported:  /export\s+default\s+defineNuxtModule/.test(c),
-    hook:      /nuxt\.hook\s*\(\s*['"]modules:done['"]/.test(c),
-    addPlugin: /addPlugin\s*\(\s*['"]\.\/runtime\/signalTracker\.plugin['"]/.test(c),
+    composable: /useSignalTracker\s*\(\s*\)/.test(c),
+    setup:      /setup\s*\(\s*\)/.test(c),
+    provide:    /provide\s*:\s*\{\s*signalTracker\s*:/.test(c),
   }
 })
 
-const checkCount = computed(() => Object.values(moduleChecks.value).filter(Boolean).length)
+const checkCount = computed(() => Object.values(pluginChecks.value).filter(Boolean).length)
 
 const signalPercent = computed(() => {
   if (isCorrect.value) return 100

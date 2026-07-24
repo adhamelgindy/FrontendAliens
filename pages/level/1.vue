@@ -12,129 +12,121 @@
 
       <!-- Header -->
       <div class="level-page__header">
-        <p class="eyebrow">First Attempt</p>
+        <p class="eyebrow">Architecture Layer One</p>
         <h1 class="level-page__title font-title">
-          Level 01 — Build the Signal Directive
+          Level 01 — Write the Composable
         </h1>
         <p class="level-page__narrative">
-          The Golden Record aboard Voyager 1 is degraded. The signal strength visualization is broken — a custom v-signal directive that should display transmission strength is incomplete. Implement it to get the signal bar working. This is your first step to restoring Voyager 1.
+          The signal tracker logic exists but isn't wired up. Write the useSignalTracker composable that reads the config and initializes the tracker. This is pure business logic — no Nuxt awareness yet.
         </p>
       </div>
 
-      <!-- Control panel with live preview -->
-      <div v-if="!isCorrect" class="level-page__control-display">
-        <div class="control-display-label font-mono text-muted" style="font-size:0.7rem; letter-spacing:0.1em; margin-bottom:16px;">
-          CONTROL PANEL — YELLOW (AWAITING SIGNAL)
-        </div>
-        <div class="control-display-panel">
-          <!-- Left joystick -->
-          <div class="control-display-section">
-            <div class="joystick-base-display">
-              <div class="joystick-stick-display"></div>
-            </div>
-          </div>
+      <!-- Signal bar -->
+      <!-- <SignalBar :percent="signalPercent" :correct="isCorrect" /> -->
 
-          <!-- Center display bar -->
-          <div class="control-display-section control-display-bar">
-            <div class="display-info-row">
-              <span class="display-label">Signal:</span>
-              <span class="display-value">{{ previewSignalStrength }}%</span>
-            </div>
-            <div class="progress-display">
+      <!-- Signal tracker demo (visual feedback) -->
+      <div class="signal-demo card">
+        <div class="signal-demo__header font-mono">Live Signal Tracker</div>
+        <div class="signal-demo__container">
+          <div class="signal-demo__controls">
+            <button class="btn btn--sm btn--ghost" @click="demoSignal = Math.max(0, demoSignal - 10)">
+              − Weaken
+            </button>
+            <div class="signal-demo__value">{{ demoSignal }}%</div>
+            <button class="btn btn--sm btn--ghost" @click="demoSignal = Math.min(100, demoSignal + 10)">
+              Strengthen +
+            </button>
+          </div>
+          <div class="signal-demo__bar-wrapper">
+            <div class="signal-demo__bar">
               <div
-                class="bar-display"
+                class="signal-demo__fill"
                 :style="{
-                  width: previewSignalStrength + '%',
-                  backgroundColor: previewBarColor,
-                  animation: previewBarBlink ? 'blink 0.5s infinite' : ''
+                  width: demoSignal + '%',
+                  backgroundColor: getDemoColor(demoSignal),
+                  animation: demoSignal < 20 ? 'blink 0.5s infinite' : ''
                 }"
               />
             </div>
-            <SignalBar :percent="previewSignalStrength" :correct="isCorrect" />
           </div>
-
-          <!-- Right controls -->
-          <div class="control-display-section">
-            <div style="display:flex; gap:8px;">
-              <button class="btn btn--sm btn--ghost" @click="boostPreview" title="Boost Signal">+</button>
-              <button class="btn btn--sm btn--ghost" @click="reducePreview" title="Reduce Signal">−</button>
-            </div>
+          <div class="signal-demo__status">
+            <span v-if="demoSignal < 40" class="status-critical">🔴 CRITICAL</span>
+            <span v-else-if="demoSignal < 80" class="status-weak">🟠 WEAK</span>
+            <span v-else class="status-strong">🟢 STRONG</span>
+            <span v-if="demoSignal < 20" class="status-blinking">BLINKING</span>
           </div>
         </div>
       </div>
 
-      <!-- Editor sidebar toggle -->
-      <button class="editor-toggle btn btn--ghost" @click="editorOpen = !editorOpen">
-        {{ editorOpen ? '◀ Hide' : '▶ Show' }} Code Editor
-      </button>
+      <!-- Validator panel -->
+      <div class="test-panel card">
+        <div class="test-panel__header font-mono">
+          Composable Validator
+        </div>
+        <div class="test-panel__cases">
+          <div
+            v-for="(check, key) in composableChecks"
+            :key="key"
+            class="test-case"
+            :class="check ? 'test-case--pass' : 'test-case--fail'"
+          >
+            <span class="test-case__icon">{{ check ? '✓' : '✗' }}</span>
+            <span class="test-case__label">
+              <span v-if="key === 'endpoint'">config.public.signalEndpoint</span>
+              <span v-else-if="key === 'init'">signalTracker.init({ ... })</span>
+              <span v-else-if="key === 'returned'">return { tracker }</span>
+            </span>
+            <span class="test-case__expect">
+              <span v-if="key === 'endpoint'">— endpoint not read</span>
+              <span v-else-if="key === 'init'">— tracker not initialized</span>
+              <span v-else-if="key === 'returned'">— tracker not returned</span>
+            </span>
+          </div>
+        </div>
+      </div>
 
-      <!-- Documentation -->
-      <div class="alert alert--info">
-        <span>
-          Learn about custom directives:
-          <a href="https://vuejs.org/guide/reusability/custom-directives.html" target="_blank" rel="noopener noreferrer" class="doc-link">
-            Vue 3 Custom Directives Guide ↗
-          </a>
-        </span>
+      <!-- Editor -->
+      <div class="level-page__editor-wrap">
+        <div class="level-page__editor-label font-mono">
+          composables/useSignalTracker.ts
+        </div>
+        <textarea
+          v-model="userCode"
+          class="code-editor"
+          :class="{
+            'code-editor--correct': isCorrect,
+            'code-editor--error': showError,
+          }"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="off"
+          :disabled="isCorrect"
+          rows="12"
+        />
       </div>
 
       <!-- Hint -->
       <div v-if="showHint" class="alert alert--hint">
-        <span>Hint: Implement updateSignal to set el.style.backgroundColor based on value: red if < 40, orange if < 80, green otherwise. Set el.style.animation to 'blink 0.5s infinite' when value < 20, empty string otherwise. In mounted and updated hooks, call updateSignal with the binding.value.</span>
+        <span>
+          <strong>Hint:</strong> The composable receives no parameters. First, use <code>useRuntimeConfig()</code> to access the runtime config. Then read the <code>config.public.signalEndpoint</code> property. Next, call <code>signalTracker.init({ endpoint, source: 'voyager-1' })</code> to initialize the tracker. Finally, return an object with the tracker.
+        </span>
       </div>
 
       <!-- Error feedback -->
       <div v-if="showError && !isCorrect" class="alert alert--error">
-        <span>Directive error — the signal bar is still not responding correctly. Check that the updateSignal function handles all cases and both hooks call it properly.</span>
+        <span>The composable is incomplete. Check that you're reading the config, initializing the tracker with the correct parameters, and returning it.</span>
       </div>
 
       <!-- Success banner -->
       <div v-if="isCorrect" class="alert alert--success">
-        <span>✧ SIGNAL LOCKED — FIRST LAYER RESTORED ✧</span>
+        <span>✧ COMPOSABLE READY — LOGIC LAYER RESTORED ✧</span>
       </div>
 
-      <!-- Success celebration -->
-      <div v-if="isCorrect" class="success-celebration">
-        <div class="celebration-content">
-          <h3 class="celebration-title">Directive Active — Signal Streaming</h3>
-          <p class="celebration-text">The signal bar is working and responsive. But the crew warns that this is just the visualization layer. The real problem is deeper — the signal itself isn't being properly configured. Continue to Level 02 to see what's actually broken.</p>
-
-          <!-- Live signal visualization -->
-          <div class="celebration-signal-demo">
-            <div class="signal-demo-header">Live Signal Feed</div>
-            <div class="signal-demo-container">
-              <div class="signal-demo-controls">
-                <button class="btn btn--sm btn--ghost" @click="celebrationSignalStrength -= 10" :disabled="celebrationSignalStrength <= 0">
-                  − Weaken
-                </button>
-                <div class="signal-demo-value">{{ celebrationSignalStrength }}%</div>
-                <button class="btn btn--sm btn--ghost" @click="celebrationSignalStrength += 10" :disabled="celebrationSignalStrength >= 100">
-                  Strengthen +
-                </button>
-              </div>
-
-              <div class="signal-demo-bar-wrapper">
-                <div class="progress-demo">
-                  <div
-                    class="signal-bar-demo"
-                    :style="{
-                      width: `${celebrationSignalStrength}%`,
-                      backgroundColor: getSignalColor(celebrationSignalStrength),
-                      animation: celebrationSignalStrength < 20 ? 'blink 0.5s infinite' : ''
-                    }"
-                  />
-                </div>
-              </div>
-
-              <div class="signal-status-text">
-                <span v-if="celebrationSignalStrength < 40" class="status-critical">🔴 CRITICAL</span>
-                <span v-else-if="celebrationSignalStrength < 80" class="status-weak">🟠 WEAK</span>
-                <span v-else class="status-strong">🟢 STRONG</span>
-                <span v-if="celebrationSignalStrength < 20" class="status-blinking">BLINKING</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Success bridge -->
+      <div v-if="isCorrect" class="bridge-box card">
+        <p class="bridge-text">
+          The composable is working — it holds the pure business logic. But calling it directly from a component means re-initializing the tracker on every page load. That's inefficient and breaks singleton state. Level 02 wraps this in a Nuxt plugin so it boots once and is available everywhere.
+        </p>
       </div>
 
       <!-- Actions -->
@@ -167,117 +159,61 @@
 
     </div>
   </div>
-
-  <!-- Editor sidebar -->
-  <div class="editor-sidebar" :class="{ 'editor-sidebar--open': editorOpen }">
-    <div class="editor-sidebar__header">
-      <span class="text-orange font-mono">signal-readout.vue</span>
-      <button class="btn btn--ghost btn--sm" @click="editorOpen = false">✕</button>
-    </div>
-    <textarea
-      v-model="userCode"
-      class="editor-sidebar__textarea"
-      :class="{
-        'editor-sidebar__textarea--correct': isCorrect,
-        'editor-sidebar__textarea--error': showError,
-      }"
-      spellcheck="false"
-      autocorrect="off"
-      autocapitalize="off"
-      :disabled="isCorrect"
-      :rows="codeRows"
-      @input="updateRows"
-    />
-    <div class="editor-sidebar__footer">
-      <button
-        v-if="!isCorrect"
-        class="btn btn--primary btn--sm"
-        @click="checkAnswer"
-      >
-        ▶ Transmit
-      </button>
-    </div>
-  </div>
-
-  <!-- Editor sidebar backdrop -->
-  <div
-    v-if="editorOpen"
-    class="editor-sidebar__backdrop"
-    @click="editorOpen = false"
-  ></div>
 </template>
 
 <script setup lang="ts">
 const game = useGame()
 
-const BROKEN_CODE = '<script setup lang="ts">\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction strengthenSignal() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction weakenSignal() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el: HTMLElement, value: number) {\n  // TODO:\n  // - Set the signal color.\n  // - Enable blinking when the signal is below 20.\n  // - Disable blinking otherwise.\n}\n\nconst vSignal = {\n  mounted(el: HTMLElement, binding: { value: number }) {\n    // TODO:\n    // Apply the initial signal state.\n  },\n\n  updated(el: HTMLElement, binding: { value: number }) {\n    // TODO:\n    // Update the signal when the value changes.\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Golden Record Transmission</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="signal-bar"\n        v-signal="signalStrength"\n        :style="{ width: `${signalStrength}%` }"\n      />\n    </' + 'div>\n\n    <p>Signal Strength: {{ signalStrength }}%</' + 'p>\n\n    <button @click="strengthenSignal">\n      Strengthen Signal\n    </' + 'button>\n\n    <button @click="weakenSignal">\n      Weaken Signal\n    </' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  border: 1px solid #ccc;\n}\n\n.signal-bar {\n  height: 20px;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
+const BROKEN_CODE = `export function useSignalTracker() {
+  const config = useRuntimeConfig()
+  // TODO: read the 'signalEndpoint' from the public config
+  // TODO: initialize the tracker with the endpoint and a 'voyager-1' source
+  // TODO: return { tracker }
+}`
 
-const CORRECT_CODE = '<script setup lang="ts">\nimport { ref } from \'vue\'\n\nconst signalStrength = ref(50)\n\nfunction strengthenSignal() {\n  if (signalStrength.value < 100) {\n    signalStrength.value += 10\n  }\n}\n\nfunction weakenSignal() {\n  if (signalStrength.value > 0) {\n    signalStrength.value -= 10\n  }\n}\n\nfunction updateSignal(el: HTMLElement, value: number) {\n  if (value < 40) {\n    el.style.backgroundColor = \'red\'\n  } else if (value < 80) {\n    el.style.backgroundColor = \'orange\'\n  } else {\n    el.style.backgroundColor = \'green\'\n  }\n\n  if (value < 20) {\n    el.style.animation = \'blink 0.5s infinite\'\n  } else {\n    el.style.animation = \'\'\n  }\n}\n\nconst vSignal = {\n  mounted(el: HTMLElement, binding: { value: number }) {\n    updateSignal(el, binding.value)\n  },\n\n  updated(el: HTMLElement, binding: { value: number }) {\n    updateSignal(el, binding.value)\n  },\n}\n</' + 'script>\n\n<template>\n  <div>\n    <h2>Golden Record Transmission</' + 'h2>\n\n    <div class="progress">\n      <div\n        class="signal-bar"\n        v-signal="signalStrength"\n        :style="{ width: `${signalStrength}%` }"\n      />\n    </' + 'div>\n\n    <p>Signal Strength: {{ signalStrength }}%</' + 'p>\n\n    <button @click="strengthenSignal">\n      Strengthen Signal\n    </' + 'button>\n\n    <button @click="weakenSignal">\n      Weaken Signal\n    </' + 'button>\n  </' + 'div>\n</' + 'template>\n\n<style scoped>\n.progress {\n  width: 300px;\n  border: 1px solid #ccc;\n}\n\n.signal-bar {\n  height: 20px;\n  transition:\n    width 0.3s,\n    background-color 0.3s;\n}\n\n@keyframes blink {\n  50% {\n    opacity: 0;\n  }\n}\n</' + 'style>'
+const CORRECT_CODE = `export function useSignalTracker() {
+  const config = useRuntimeConfig()
+  const endpoint = config.public.signalEndpoint
+  const tracker = signalTracker.init({
+    endpoint,
+    source: 'voyager-1',
+  })
+  return { tracker }
+}`
 
-const userCode     = ref(BROKEN_CODE)
-const isCorrect    = ref(false)
-const showError    = ref(false)
-const showHint     = ref(false)
-const codeRows     = ref(BROKEN_CODE.split('\n').length)
-const previewSignalStrength = ref(50)
-const celebrationSignalStrength = ref(50)
-const editorOpen   = ref(false)
+const userCode  = ref(BROKEN_CODE)
+const isCorrect = ref(false)
+const showError = ref(false)
+const showHint  = ref(false)
+const demoSignal = ref(50)
 
-function updateRows() {
-  codeRows.value = userCode.value.split('\n').length
-}
-
-function boostPreview() {
-  if (previewSignalStrength.value < 100) {
-    previewSignalStrength.value += 10
+const composableChecks = computed(() => {
+  const c = userCode.value
+  return {
+    endpoint:  /config\.public\.signalEndpoint/.test(c),
+    init:      /signalTracker\.init\s*\(\s*\{/.test(c),
+    returned:  /return\s*\{\s*tracker\s*\}/.test(c),
   }
-}
-
-function reducePreview() {
-  if (previewSignalStrength.value > 0) {
-    previewSignalStrength.value -= 10
-  }
-}
-
-function getSignalColor(value: number): string {
-  if (value < 40) return 'red'
-  if (value < 80) return 'orange'
-  return 'green'
-}
-
-// Detect whether the user has implemented the color logic
-const hasColorLogic = computed(() =>
-  userCode.value.includes('backgroundColor') &&
-  userCode.value.includes('binding.value')
-)
-
-const hasBlinkLogic = computed(() =>
-  userCode.value.includes('animation') &&
-  userCode.value.includes('binding.value')
-)
-
-// Drive the bar color from the user's implementation intent
-const previewBarColor = computed(() => {
-  if (!hasColorLogic.value) return 'orange'
-  const v = previewSignalStrength.value
-  if (v < 40) return 'red'
-  if (v < 80) return 'orange'
-  return 'green'
 })
 
-const previewBarBlink = computed(() =>
-  hasBlinkLogic.value && previewSignalStrength.value < 20
-)
+const checkCount    = computed(() => Object.values(composableChecks.value).filter(Boolean).length)
+const signalPercent = computed(() => isCorrect.value ? 100 : Math.round((checkCount.value / 3) * 80))
 
 function normalize(s: string): string {
   return s.replace(/\s+/g, ' ').trim()
 }
 
+function getDemoColor(value: number): string {
+  if (value < 40) return 'red'
+  if (value < 80) return 'orange'
+  return 'green'
+}
 
 function checkAnswer() {
   if (normalize(userCode.value) === normalize(CORRECT_CODE)) {
     isCorrect.value = true
     showError.value = false
+    userCode.value = CORRECT_CODE
     game.completeLevel(1)
   } else {
     showError.value = true
@@ -290,10 +226,10 @@ function resetCode() {
   showHint.value  = false
 }
 
-// Route guard: level 1 is always accessible
 onMounted(() => {
   if (game.isLevelComplete(1)) {
     isCorrect.value = true
+    userCode.value  = CORRECT_CODE
   }
 })
 </script>
@@ -675,5 +611,101 @@ onMounted(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* Signal demo */
+.signal-demo {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-demo__header {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.signal-demo__container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signal-demo__controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.signal-demo__value {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+.signal-demo__bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-demo__bar {
+  width: 100%;
+  height: 40px;
+  border: 2px solid rgba(52, 211, 153, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-demo__fill {
+  height: 100%;
+  transition: width 0.3s, background-color 0.3s;
+}
+
+.signal-demo__status {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.status-critical {
+  color: #ef4444;
+}
+
+.status-weak {
+  color: #f97316;
+}
+
+.status-strong {
+  color: #22c55e;
+}
+
+.status-blinking {
+  color: var(--gold);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+.bridge-box {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.bridge-text {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
 }
 </style>

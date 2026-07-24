@@ -1,191 +1,236 @@
 <template>
   <div class="level-page">
     <div class="container level-page__inner">
-
-      <!-- Back nav -->
       <div class="level-page__back">
-        <NuxtLink to="/level/2" class="btn btn--ghost btn--sm">
-          ← Level 02
-        </NuxtLink>
+        <NuxtLink to="/level/2" class="btn btn--ghost btn--sm">← Level 02</NuxtLink>
         <span class="level-page__progress font-mono">Level 03 / 03</span>
       </div>
 
-      <!-- Locked state -->
       <div v-if="locked" class="alert alert--error">
         <span>Access denied — complete Level 02 first.</span>
-        <NuxtLink to="/level/2" class="btn btn--ghost btn--sm" style="margin-left:auto">
-          Go to Level 02
-        </NuxtLink>
+        <NuxtLink to="/level/2" class="btn btn--ghost btn--sm" style="margin-left:auto">Go to Level 02</NuxtLink>
       </div>
 
       <template v-else>
-        <!-- Header -->
         <div class="level-page__header">
-          <p class="eyebrow">Runtime Gap</p>
-          <h1 class="level-page__title font-title">
-            Level 03 — Inject as a Plugin
-          </h1>
+          <p class="eyebrow">Mission Control Architecture</p>
+          <h1 class="level-page__title font-title">Level 03 — Plugin Lifecycle & Order</h1>
           <p class="level-page__narrative">
-            The module registered the signal tracker at build time — but
-            components still can't reach it. Modules configure Nuxt; they don't
-            inject anything into the running app. Rewrite it as a Nuxt plugin so
-            the signal tracker is initialized when the app boots and available to
-            every component via <code>nuxtApp.provide</code>.
+            Multiple plugins work together, but some execute before the data they need. Fix execution order, expose helpers, and activate directives.
           </p>
         </div>
 
-        <!-- Signal bar -->
         <SignalBar :percent="signalPercent" :correct="isCorrect" />
 
-        <!-- Build Validator panel -->
-        <div class="test-panel card">
-          <div class="test-panel__header font-mono">
-            <span class="text-muted" style="font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;">
-              Plugin Validator
-            </span>
+        <!-- Challenge 1 -->
+        <div class="challenge-section">
+          <div class="challenge-title">Challenge 1: Parallel Execution</div>
+          <div class="test-panel card">
+            <div class="test-panel__cases">
+              <div :class="['test-case', ch1.parallel ? 'test-case--pass' : 'test-case--fail']">
+                <span class="test-case__icon">{{ ch1.parallel ? '✓' : '✗' }}</span>
+                <span class="test-case__label">Parallel Plugins</span>
+              </div>
+            </div>
           </div>
-          <div class="test-panel__cases">
-            <div
-              :class="['test-case', buildChecks.exported ? 'test-case--pass' : 'test-case--fail']"
-            >
-              <span class="test-case__icon">{{ buildChecks.exported ? '✓' : '✗' }}</span>
-              <span class="test-case__label">export default defineNuxtPlugin(...)</span>
-              <span class="test-case__expect text-muted">— plugin not exported</span>
-            </div>
-            <div
-              :class="['test-case', buildChecks.nuxtApp ? 'test-case--pass' : 'test-case--fail']"
-            >
-              <span class="test-case__icon">{{ buildChecks.nuxtApp ? '✓' : '✗' }}</span>
-              <span class="test-case__label">defineNuxtPlugin((nuxtApp) => ...)</span>
-              <span class="test-case__expect text-muted">— nuxtApp argument missing</span>
-            </div>
-            <div
-              :class="['test-case', buildChecks.provide ? 'test-case--pass' : 'test-case--fail']"
-            >
-              <span class="test-case__icon">{{ buildChecks.provide ? '✓' : '✗' }}</span>
-              <span class="test-case__label">nuxtApp.provide('signalTracker', ...)</span>
-              <span class="test-case__expect text-muted">— signal tracker not injected</span>
-            </div>
+          <div class="challenge-description">
+            Nuxt won't wait until the end of the plugin's execution before loading the next plugin
+          </div>
+          <div class="level-page__editor-wrap">
+            <div class="level-page__editor-label font-mono">plugins/signal-config.ts</div>
+            <textarea v-model="code1" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="8" :disabled="isCorrect" />
           </div>
         </div>
 
-        <!-- Editor -->
-        <div class="level-page__editor-wrap">
-          <div class="level-page__editor-label font-mono">
-            <span class="text-orange">plugins/signalTracker.ts</span>
-            <span class="text-muted" style="margin-left:auto; font-size:0.7rem;">
-              Implement the plugin
-            </span>
+        <!-- Challenge 2 -->
+        <div class="challenge-section">
+          <div class="challenge-title">Challenge 2: Plugin Dependencies</div>
+          <div class="test-panel card">
+            <div class="test-panel__cases">
+              <div :class="['test-case', ch2.dependsOn ? 'test-case--pass' : 'test-case--fail']">
+                <span class="test-case__icon">{{ ch2.dependsOn ? '✓' : '✗' }}</span>
+                <span class="test-case__label">Plugins With Dependencies</span>
+              </div>
+            </div>
           </div>
-          <textarea
-            v-model="userCode"
-            class="code-editor"
-            :class="{
-              'code-editor--correct': isCorrect,
-              'code-editor--error': showError,
-            }"
-            spellcheck="false"
-            autocorrect="off"
-            autocapitalize="off"
-            :disabled="isCorrect"
-            rows="10"
-          />
+          <div class="challenge-description">
+            Declare that signal-tracker depends on signal-config
+          </div>
+          <div class="level-page__editor-wrap">
+            <div class="level-page__editor-label font-mono">plugins/signal-tracker.ts</div>
+            <textarea v-model="code2" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="10" :disabled="isCorrect" />
+          </div>
         </div>
 
-        <!-- Hint -->
+        <!-- Challenge 3 -->
+        <div class="challenge-section">
+          <div class="challenge-title">Challenge 3: Provide Helper</div>
+          <div class="test-panel card">
+            <div class="test-panel__cases">
+              <div :class="['test-case', ch3.provide ? 'test-case--pass' : 'test-case--fail']">
+                <span class="test-case__icon">{{ ch3.provide ? '✓' : '✗' }}</span>
+                <span class="test-case__label">Providing Helpers</span>
+              </div>
+            </div>
+          </div>
+          <div class="challenge-description">
+            To provide a helper on the NuxtApp instance, return it from the plugin under a provide key.
+          </div>
+
+          <div class="level-page__editor-wrap">
+            <div class="level-page__editor-label font-mono">plugins/mission-helper.ts</div>
+            <textarea v-model="code3" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="10" :disabled="isCorrect" />
+          </div>
+
+          <!-- Usage example -->
+          <div class="reference-block">
+            <div class="reference-label">Usage in Component</div>
+            <pre class="reference-code"><code>&lt;script setup lang="ts"&gt;
+const { $missionStatus } = useNuxtApp()
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &#123;&#123; $missionStatus('ready') &#125;&#125;
+  &lt;/div&gt;
+&lt;/template&gt;</code></pre>
+          </div>
+        </div>
+
+        <!-- Challenge 4 -->
+        <div class="challenge-section">
+          <div class="challenge-title">Challenge 4: Register & Apply the Directive</div>
+
+          <!-- Reference: plugin that provides the directive -->
+          <div class="reference-block">
+            <div class="reference-label">Reference: plugins/signal-lock.ts</div>
+            <pre class="reference-code"><code>export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.directive('signal-lock', {
+    mounted(el: HTMLElement) {
+      el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+      el.focus()
+    },
+  })
+})</code></pre>
+          </div>
+
+          <div class="test-panel card">
+            <div class="test-panel__cases">
+              <div :class="['test-case', ch4.directive ? 'test-case--pass' : 'test-case--fail']">
+                <span class="test-case__icon">{{ ch4.directive ? '✓' : '✗' }}</span>
+                <span class="test-case__label">v-signal-lock applied to input</span>
+              </div>
+            </div>
+          </div>
+          <div class="level-page__editor-wrap">
+            <div class="level-page__editor-label font-mono">components/MissionInput.vue</div>
+            <textarea v-model="code4" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="6" :disabled="isCorrect" />
+          </div>
+        </div>
+
         <div v-if="showHint" class="alert alert--hint">
-          <span>Hint: A Nuxt plugin must be exported with <code>export default defineNuxtPlugin((nuxtApp) =&gt; {})</code>. The <code>nuxtApp</code> argument gives you access to <code>nuxtApp.provide('key', value)</code>, which injects the value into every component as <code>$key</code>. Use <code>useScript(url)</code> to load the signal tracker script.</span>
+          <span><strong>Hint:</strong> Ch1: <code>parallel: true</code>. Ch2: <code>dependsOn: ['signal-config']</code>. Ch3: Return provide with missionStatus. Ch4: Add <code>v-signal-lock</code> to input.</span>
         </div>
 
-        <!-- Error feedback -->
         <div v-if="showError && !isCorrect" class="alert alert--error">
-          <span>Plugin validation failed — check the export, the nuxtApp parameter, and the provide call.</span>
+          <span>Validation failed — check all four challenges.</span>
         </div>
 
-        <!-- Success banner -->
         <div v-if="isCorrect" class="alert alert--success">
-          <span>✧ PLUGIN INJECTED — GOLDEN RECORD FULLY RESTORED ✧ The signal tracker is live. Initiating finale sequence…</span>
+          <span>✧ MISSION CONTROL STABLE ✧</span>
         </div>
 
-        <!-- Actions -->
         <div class="level-page__actions">
-          <button
-            v-if="!isCorrect"
-            class="btn btn--ghost"
-            @click="showHint = !showHint"
-          >
+          <button v-if="!isCorrect" class="btn btn--ghost" @click="showHint = !showHint">
             {{ showHint ? 'Hide Hint' : 'Request Hint' }}
           </button>
-          <button
-            v-if="!isCorrect"
-            class="btn btn--ghost"
-            @click="resetCode"
-          >
-            Reset
-          </button>
-          <button
-            v-if="!isCorrect"
-            class="btn btn--primary"
-            @click="checkAnswer"
-          >
-            ▶ Transmit Fix
-          </button>
-          <NuxtLink v-if="isCorrect" to="/finale" class="btn btn--success">
-            View Finale →
-          </NuxtLink>
+          <button v-if="!isCorrect" class="btn btn--ghost" @click="resetCode">Reset</button>
+          <button v-if="!isCorrect" class="btn btn--primary" @click="checkAnswer">▶ Transmit</button>
+          <NuxtLink v-if="isCorrect" to="/finale" class="btn btn--success">View Finale →</NuxtLink>
         </div>
       </template>
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const router = useRouter()
-const game   = useGame()
-
+const game = useGame()
 const locked = computed(() => !game.canAccessLevel(3))
 
-const BROKEN_CODE = `// plugins/signalTracker.ts
-export default defineNuxtPlugin(() => {
-  // TODO: initialize the signal tracker using useScript
-  // TODO: provide it to the app as 'signalTracker'
-})`
+const code1 = ref(`export default defineNuxtPlugin({
+  name: 'signal-config',
+  // TODO
+  async setup() {
+    await loadRemoteConfig()
+    return {
+      provide: {
+        signalConfig: { endpoint: 'https://signal.space/api' }
+      }
+    }
+  }
+})`)
 
-const CORRECT_CODE = `// plugins/signalTracker.ts
-export default defineNuxtPlugin((nuxtApp) => {
-  const signalTracker = useScript('https://tracker.voyager.space/signal.js')
-  nuxtApp.provide('signalTracker', signalTracker)
-})`
+const code2 = ref(`export default defineNuxtPlugin({
+  name: 'signal-tracker',
+  // TODO
+  setup(nuxtApp) {
+    const config = nuxtApp.$signalConfig
+    const tracker = createTracker(config.endpoint)
+    return { provide: { signalTracker: tracker } }
+  }
+})`)
 
-const userCode  = ref(BROKEN_CODE)
+const code3 = ref(`export default defineNuxtPlugin({
+  name: 'mission-helper',
+  setup() {
+    // TODO: provide missionStatus function
+  }
+})`)
+
+const code4 = ref(`<template>
+  <input />
+</template>
+`)
+
 const isCorrect = ref(false)
 const showError = ref(false)
-const showHint  = ref(false)
+const showHint = ref(false)
 
-function normalize(s: string): string {
-  return s.replace(/\s+/g, ' ').trim()
-}
+const ch1 = computed(() => ({
+  parallel: /parallel\s*:\s*true/.test(code1.value)
+}))
 
-// Check plugin structure on every keystroke
-const buildChecks = computed(() => {
-  const c = userCode.value
-  return {
-    exported: /export\s+default\s+defineNuxtPlugin/.test(c),
-    nuxtApp: /defineNuxtPlugin\s*\(\s*\(nuxtApp\)/.test(c),
-    provide: /nuxtApp\.provide\s*\(\s*['"]signalTracker['"]/.test(c),
-  }
-})
+const ch2 = computed(() => ({
+  dependsOn: /dependsOn\s*:\s*\[\s*['"]signal-config['"]/.test(code2.value)
+}))
 
-const checkCount = computed(() => Object.values(buildChecks.value).filter(Boolean).length)
+const ch3 = computed(() => ({
+  provide: /provide\s*:\s*\{\s*missionStatus/.test(code3.value)
+}))
+
+const ch4 = computed(() => ({
+  directive: /v-signal-lock/.test(code4.value)
+}))
+
+const allPass = computed(() =>
+  ch1.value.parallel &&
+  ch2.value.dependsOn &&
+  ch3.value.provide &&
+  ch4.value.directive
+)
 
 const signalPercent = computed(() => {
   if (isCorrect.value) return 100
-  return Math.round((checkCount.value / 3) * 80)
+  const count = [ch1.value.parallel, ch2.value.dependsOn, ch3.value.provide, ch4.value.directive].filter(Boolean).length
+  return Math.round((count / 4) * 80)
 })
 
 function checkAnswer() {
-  if (normalize(userCode.value) === normalize(CORRECT_CODE)) {
+  if (allPass.value) {
     isCorrect.value = true
     showError.value = false
     game.completeLevel(3)
@@ -196,20 +241,103 @@ function checkAnswer() {
 }
 
 function resetCode() {
-  userCode.value  = BROKEN_CODE
+  code1.value = `export default defineNuxtPlugin({
+  name: 'signal-config',
+  // TODO: add parallel: true
+  async setup() {
+    await loadRemoteConfig()
+    return {
+      provide: {
+        signalConfig: { endpoint: 'https://signal.space/api' }
+      }
+    }
+  }
+})`
+  code2.value = `export default defineNuxtPlugin({
+  name: 'signal-tracker',
+  // TODO: add dependsOn: ['signal-config']
+  setup(nuxtApp) {
+    const config = nuxtApp.$signalConfig
+    const tracker = createTracker(config.endpoint)
+    return { provide: { signalTracker: tracker } }
+  }
+})`
+  code3.value = `export default defineNuxtPlugin({
+  name: 'mission-helper',
+  setup() {
+    // TODO: provide missionStatus function
+  }
+})`
+  code4.value = `<template>
+  <input />
+</template>
+`
   showError.value = false
-  showHint.value  = false
+  showHint.value = false
 }
 
 onMounted(() => {
   if (game.isLevelComplete(3)) {
     isCorrect.value = true
-    userCode.value  = CORRECT_CODE
   }
 })
 </script>
 
 <style scoped>
+.challenge-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.challenge-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gold);
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+}
+
+.challenge-description {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 0 0 8px 0;
+}
+
+.reference-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--navy-dark);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.reference-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.reference-code {
+  margin: 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.reference-code code {
+  font-family: var(--mono);
+  color: var(--text);
+}
+
 .level-page {
   flex: 1;
   padding: 48px 0 80px;
@@ -253,57 +381,10 @@ onMounted(() => {
   line-height: 1.7;
 }
 
-/* Test panel */
-.test-panel__header {
-  margin-bottom: 14px;
-}
-
-.test-panel__cases {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.test-case {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: calc(var(--radius) - 2px);
-  border: 1px solid transparent;
-  font-size: 0.82rem;
-}
-
-.test-case--pass {
-  background: var(--green-dim);
-  border-color: rgba(95,201,148,0.25);
-  color: var(--green);
-}
-
-.test-case--fail {
-  background: rgba(232,90,74,0.08);
-  border-color: rgba(232,90,74,0.2);
-  color: #e85a4a;
-}
-
-.test-case__icon {
-  font-size: 0.9rem;
-  width: 16px;
-  flex-shrink: 0;
-}
-
-.test-case__label {
-  flex: 1;
-}
-
-.test-case__expect {
-  font-size: 0.75rem;
-}
-
-/* Editor */
 .level-page__editor-wrap {
   display: flex;
   flex-direction: column;
+  gap: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -319,13 +400,24 @@ onMounted(() => {
   letter-spacing: 0.06em;
 }
 
-.level-page__editor-wrap .code-editor {
+.code-editor {
   border: none;
-  border-radius: 0;
+  background: var(--navy-dark);
+  color: var(--text);
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
 }
-.level-page__editor-wrap .code-editor:focus {
-  border: none;
+
+.code-editor:focus {
   outline: none;
+}
+
+.code-editor--correct {
+  background: rgba(52, 211, 153, 0.1);
 }
 
 .level-page__actions {
@@ -334,8 +426,52 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.btn--sm {
-  padding: 8px 16px;
-  font-size: 0.75rem;
+.test-panel {
+  padding: 16px;
+}
+
+.test-panel__cases {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.test-case {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.test-case--pass {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: var(--green);
+}
+
+.test-case--fail {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--orange);
+}
+
+.test-case__icon {
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 20px;
+}
+
+.test-case--pass .test-case__icon {
+  color: var(--green);
+}
+
+.test-case--fail .test-case__icon {
+  color: var(--orange);
+}
+
+.test-case__label {
+  font-family: var(--mono);
+  flex: 1;
 }
 </style>

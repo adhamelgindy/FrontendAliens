@@ -3,21 +3,28 @@
     <div class="container finale__inner">
 
       <!-- Eyebrow -->
-      <p class="eyebrow finale__eyebrow">Final Assembly</p>
+      <p class="eyebrow finale__eyebrow">Plugin Registration Order</p>
 
       <!-- Intro -->
       <div class="finale__intro">
         <h1 class="finale__title font-title">
-          Slot the Files<br />
-          <span class="finale__title--accent">Into the Record</span>
+          Order the Plugins<br />
+          <span class="finale__title--accent">By Boot Sequence</span>
         </h1>
         <p class="finale__subtitle-pre font-mono">
-          Three layers. Three files. One record.
+          Filenames sort as strings — not numbers
+        </p>
+      </div>
+
+      <!-- Explanation -->
+      <div class="puzzle-explainer card">
+        <p class="puzzle-explainer__text">
+          You can control the order in which plugins are registered by prefixing with 'alphabetical' numbering to the file names. This is useful in situations where you have a plugin that depends on another plugin.
         </p>
       </div>
 
       <!-- ── Drag puzzle ── -->
-      <div class="puzzle">
+      <div class="puzzle" :class="{ 'puzzle--solved': puzzleSolved }">
 
         <!-- File tray (left) -->
         <div class="puzzle__left">
@@ -38,12 +45,8 @@
 
         <!-- Project tree (right) -->
         <div class="puzzle__right">
-          <div class="puzzle__tree-label font-mono">PROJECT STRUCTURE</div>
+          <div class="puzzle__tree-label font-mono">BOOT SEQUENCE</div>
           <div class="puzzle__tree">
-            <div class="tree-node">
-              <span class="tree-node__icon">📁</span>
-              <span class="tree-node__name">project-root/</span>
-            </div>
             <div
               v-for="folder in FOLDERS"
               :key="folder.id"
@@ -56,8 +59,8 @@
               @dragleave="dragOver = null"
               @drop="onDrop(folder.id)"
             >
-              <span class="tree-folder__icon">📁</span>
-              <span class="tree-folder__name">{{ folder.name }}/</span>
+              <span class="tree-folder__icon">{{ SLOT_ICONS[folder.id] }}</span>
+              <span class="tree-folder__name">{{ SLOT_LABELS[folder.id] }}</span>
               <div v-if="getFilesInFolder(folder.id).length" class="tree-folder__contents">
                 <div
                   v-for="file in getFilesInFolder(folder.id)"
@@ -77,7 +80,7 @@
 
       <!-- Puzzle error -->
       <div v-if="showPuzzleError" class="alert alert--error">
-        <span>Wrong folder — a file is in the wrong directory. Check which folder each file belongs to.</span>
+        <span>Wrong order — remember: filenames sort as strings. "2" comes after "10" alphabetically.</span>
       </div>
 
       <!-- Puzzle submit -->
@@ -150,40 +153,36 @@
       <!-- Comparison table — What you learned -->
       <div class="comparison card">
         <div class="comparison__title font-mono" style="font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; color:var(--muted);">
-          Three Layers of Nuxt
+          Plugin Registration Order
         </div>
         <table class="comparison__table">
           <thead>
             <tr>
-              <th>Layer</th>
-              <th>Where</th>
-              <th>When</th>
-              <th>What it's for</th>
+              <th>Filename</th>
+              <th>Sorts as</th>
+              <th>Boot position</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="comparison__layer">&lt;script setup&gt;</td>
-              <td class="font-mono">.vue component</td>
-              <td>Per component mount</td>
-              <td>Reactive state, computed values, local logic</td>
+              <td class="comparison__layer">01.signal-config.ts</td>
+              <td class="font-mono">"01..." → boots 1st</td>
+              <td>Smallest prefix — always first</td>
             </tr>
             <tr>
-              <td class="comparison__layer">defineNuxtPlugin</td>
-              <td class="font-mono">plugins/*.ts</td>
-              <td>Once at app boot (runtime)</td>
-              <td>Global helpers, $inject, third-party init</td>
+              <td class="comparison__layer">10.signal-tracker.ts</td>
+              <td class="font-mono">"10..." → boots 2nd</td>
+              <td>"10" &lt; "2" as strings — 1 sorts before 2</td>
             </tr>
             <tr>
-              <td class="comparison__layer">nuxt.config.ts</td>
-              <td class="font-mono">Project root</td>
-              <td>Build time (never in browser)</td>
-              <td>Modules, runtimeConfig, HTML head, routes</td>
+              <td class="comparison__layer">2.mission-helper.ts</td>
+              <td class="font-mono">"2..." → boots 3rd</td>
+              <td>"2" &gt; "10" alphabetically — the trap</td>
             </tr>
           </tbody>
         </table>
         <p class="comparison__caption text-muted" style="font-size:0.75rem; margin-top:14px;">
-          Three layers. One mission. Now you know where each piece lives.
+          Filenames sort as strings. "10" comes before "2". Always zero-pad single digits.
         </p>
       </div>
 
@@ -194,10 +193,10 @@
         </div>
         <p class="alien-box__msg font-mono">
           "WE RECEIVED YOUR GOLDEN RECORD. YOUR MUSIC IS BEAUTIFUL.
-          WE ESPECIALLY LIKED 'JOHNNY B. GOODE'.
+          WE ESPECIALLY LIKED 'The double cheese Burger'.
           WE HAVE SENT OUR OWN RECORD IN RESPONSE.
-          IT ARRIVES IN APPROXIMATELY 40,000 YEARS.
-          PLEASE KEEP THE LIGHTS ON."
+          IT ARRIVES IN APPROXIMATELY 40,000 light YEARS.
+          In the mean time, please watch this video to learn our ways..."
         </p>
         <p class="alien-box__sig text-muted font-mono" style="font-size:0.72rem; margin-top:12px; letter-spacing:0.1em;">
           — TRANSMISSION ORIGIN: UNKNOWN / DISTANCE: ∞
@@ -270,6 +269,7 @@
 <script setup lang="ts">
 const router = useRouter()
 const game   = useGame()
+const { triggerRestoration } = useSystemRestoration()
 
 const videoPlaying = ref(false)
 
@@ -287,16 +287,28 @@ interface PuzzleFolder {
 }
 
 const FILES: PuzzleFile[] = [
-  { id: 'directive', name: 'signal-readout.vue',      answer: 'components' },
-  { id: 'module',    name: 'signal.ts',               answer: 'modules'    },
-  { id: 'plugin',    name: 'signalTracker.ts',        answer: 'plugins'    },
+  { id: 'config',  name: '01.signal-config.ts',  answer: 'slot1' },
+  { id: 'tracker', name: '10.signal-tracker.ts', answer: 'slot2' },
+  { id: 'helper',  name: '2.mission-helper.ts',  answer: 'slot3' },
 ]
 
 const FOLDERS: PuzzleFolder[] = [
-  { id: 'components', name: 'components' },
-  { id: 'modules',    name: 'modules'    },
-  { id: 'plugins',    name: 'plugins'    },
+  { id: 'slot1', name: 'slot1' },
+  { id: 'slot2', name: 'slot2' },
+  { id: 'slot3', name: 'slot3' },
 ]
+
+const SLOT_LABELS: Record<string, string> = {
+  slot1: 'Boots 1st',
+  slot2: 'Boots 2nd',
+  slot3: 'Boots 3rd',
+}
+
+const SLOT_ICONS: Record<string, string> = {
+  slot1: '①',
+  slot2: '②',
+  slot3: '③',
+}
 
 const placements   = ref<Record<string, string>>({})  // folderId → fileId (can be multiple)
 const draggedId    = ref<string | null>(null)
@@ -347,6 +359,7 @@ function checkPuzzle() {
   if (allCorrect) {
     puzzleSolved.value = true
     showPuzzleError.value = false
+    triggerRestoration()
   } else {
     showPuzzleError.value = true
   }
@@ -362,21 +375,21 @@ function resetPuzzle() {
 const logEntries = [
   {
     time:        'T+00:00:01',
-    status:      'REPAIRED',
+    status:      'BOOTED',
     statusClass: 'text-green',
-    msg:         'signal-readout.vue — v-signal directive implemented, signal bar responding',
+    msg:         '01.signal-config.ts — boots first, $signalConfig available',
   },
   {
     time:        'T+00:00:02',
-    status:      'REPAIRED',
+    status:      'BOOTED',
     statusClass: 'text-green',
-    msg:         'modules/signal.ts — defineNuxtModule registered signalTracker at build time',
+    msg:         '10.signal-tracker.ts — boots second ("10" < "2" as strings), safely reads $signalConfig',
   },
   {
     time:        'T+00:00:03',
-    status:      'REPAIRED',
+    status:      'BOOTED',
     statusClass: 'text-green',
-    msg:         'plugins/signalTracker.ts — defineNuxtPlugin injected tracker into every component',
+    msg:         '2.mission-helper.ts — boots last ("2" > "10" alphabetically — the string-sort trap)',
   },
   {
     time:        'T+00:00:04',
@@ -655,13 +668,31 @@ onMounted(() => {
   gap: 12px;
 }
 
+.puzzle--solved {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.8s ease-out;
+  pointer-events: none;
+}
+
 /* Reveal section */
 .finale__reveal {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  animation: fade-in 0.8s ease both;
+  animation: reveal-pop 1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes reveal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .finale__reveal-title {
@@ -673,7 +704,7 @@ onMounted(() => {
   text-align: center;
 }
 
-@keyframes fade-in {
+@keyframes typewriter-fade {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
@@ -949,6 +980,39 @@ onMounted(() => {
 
 .comparison__caption {
   font-style: italic;
+}
+
+/* Puzzle explainer */
+.puzzle-explainer {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.puzzle-explainer__text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.puzzle-explainer__text code {
+  font-family: var(--mono);
+  color: var(--orange);
+  font-size: 0.85em;
+}
+
+.puzzle-explainer__text strong {
+  color: var(--text);
+}
+
+.puzzle-explainer__text em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 600;
 }
 
 /* Footer */

@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 const canvasEl = ref<HTMLCanvasElement | null>(null)
+const { systemRestored } = useSystemRestoration()
 
 interface Star {
   x: number
@@ -48,6 +49,12 @@ onMounted(() => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     for (const s of stars) {
+      // Move stars when system is restored
+      if (systemRestored.value) {
+        s.x -= s.speed
+        if (s.x < -10) s.x = canvas.width + 10
+      }
+
       // Twinkle
       s.opacity += s.opacityDir * 0.004
       if (s.opacity >= 1)   { s.opacity = 1;   s.opacityDir = -1 }

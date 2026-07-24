@@ -31,5 +31,12 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  runtimeConfig: {
+    public: {
+      voyagerToken:    '',
+      signalEndpoint:  'https://tracker.voyager.space/signal',
+    },
+  },
+
   compatibilityDate: '2024-11-01',
 })
