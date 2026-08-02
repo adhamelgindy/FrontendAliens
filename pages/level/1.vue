@@ -17,46 +17,13 @@
           Level 01 — Write the Composable
         </h1>
         <p class="level-page__narrative">
-          The signal tracker logic exists but isn't wired up. Write the useSignalTracker composable that reads the config and initializes the tracker. This is pure business logic — no Nuxt awareness yet.
+          Voyager's signal grows stronger the deeper it drifts into space. The <code>update()</code> function is ready — but nobody told the composable when to start or stop listening. Wire up the scroll listener using Vue's lifecycle hooks.
         </p>
       </div>
 
       <!-- Signal bar -->
       <!-- <SignalBar :percent="signalPercent" :correct="isCorrect" /> -->
 
-      <!-- Signal tracker demo (visual feedback) -->
-      <div class="signal-demo card">
-        <div class="signal-demo__header font-mono">Live Signal Tracker</div>
-        <div class="signal-demo__container">
-          <div class="signal-demo__controls">
-            <button class="btn btn--sm btn--ghost" @click="demoSignal = Math.max(0, demoSignal - 10)">
-              − Weaken
-            </button>
-            <div class="signal-demo__value">{{ demoSignal }}%</div>
-            <button class="btn btn--sm btn--ghost" @click="demoSignal = Math.min(100, demoSignal + 10)">
-              Strengthen +
-            </button>
-          </div>
-          <div class="signal-demo__bar-wrapper">
-            <div class="signal-demo__bar">
-              <div
-                class="signal-demo__fill"
-                :style="{
-                  width: demoSignal + '%',
-                  backgroundColor: getDemoColor(demoSignal),
-                  animation: demoSignal < 20 ? 'blink 0.5s infinite' : ''
-                }"
-              />
-            </div>
-          </div>
-          <div class="signal-demo__status">
-            <span v-if="demoSignal < 40" class="status-critical">🔴 CRITICAL</span>
-            <span v-else-if="demoSignal < 80" class="status-weak">🟠 WEAK</span>
-            <span v-else class="status-strong">🟢 STRONG</span>
-            <span v-if="demoSignal < 20" class="status-blinking">BLINKING</span>
-          </div>
-        </div>
-      </div>
 
       <!-- Validator panel -->
       <div class="test-panel card">
@@ -72,14 +39,18 @@
           >
             <span class="test-case__icon">{{ check ? '✓' : '✗' }}</span>
             <span class="test-case__label">
-              <span v-if="key === 'endpoint'">config.public.signalEndpoint</span>
-              <span v-else-if="key === 'init'">signalTracker.init({ ... })</span>
-              <span v-else-if="key === 'returned'">return { tracker }</span>
+              <span v-if="key === 'onMounted'">onMounted(() => ...)</span>
+              <span v-else-if="key === 'addListener'">window.addEventListener('scroll', update)</span>
+              <span v-else-if="key === 'onUnmounted'">onUnmounted(() => ...)</span>
+              <span v-else-if="key === 'removeListener'">window.removeEventListener('scroll', update)</span>
+              <span v-else-if="key === 'returned'">return { signalStrength }</span>
             </span>
             <span class="test-case__expect">
-              <span v-if="key === 'endpoint'">— endpoint not read</span>
-              <span v-else-if="key === 'init'">— tracker not initialized</span>
-              <span v-else-if="key === 'returned'">— tracker not returned</span>
+              <span v-if="key === 'onMounted'">— not called</span>
+              <span v-else-if="key === 'addListener'">— listener not added</span>
+              <span v-else-if="key === 'onUnmounted'">— not called</span>
+              <span v-else-if="key === 'removeListener'">— listener not removed</span>
+              <span v-else-if="key === 'returned'">— not returned</span>
             </span>
           </div>
         </div>
@@ -105,16 +76,40 @@
         />
       </div>
 
+      <!-- Live Signal Tracker -->
+      <div class="signal-tracker card">
+        <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
+        <div class="signal-tracker__container">
+          <div class="signal-tracker__bar-wrapper">
+            <div class="signal-tracker__bar">
+              <div
+                class="signal-tracker__fill"
+                :style="{
+                  width: liveSignal + '%',
+                  backgroundColor: getSignalColor(liveSignal),
+                }"
+              />
+            </div>
+          </div>
+          <div class="signal-tracker__status">
+            <span class="signal-tracker__value">{{ Math.round(liveSignal) }}%</span>
+            <span v-if="liveSignal < 40" class="status-critical">🔴 CRITICAL</span>
+            <span v-else-if="liveSignal < 80" class="status-weak">🟠 WEAK</span>
+            <span v-else class="status-strong">🟢 STRONG</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Hint -->
       <div v-if="showHint" class="alert alert--hint">
         <span>
-          <strong>Hint:</strong> The composable receives no parameters. First, use <code>useRuntimeConfig()</code> to access the runtime config. Then read the <code>config.public.signalEndpoint</code> property. Next, call <code>signalTracker.init({ endpoint, source: 'voyager-1' })</code> to initialize the tracker. Finally, return an object with the tracker.
+          <strong>Hint:</strong> Use <code>onMounted</code> to call <code>window.addEventListener('scroll', update)</code> when the composable starts. Use <code>onUnmounted</code> to call <code>window.removeEventListener('scroll', update)</code> when it stops. Pass the <strong>same function reference</strong> to both — otherwise cleanup won't work.
         </span>
       </div>
 
       <!-- Error feedback -->
       <div v-if="showError && !isCorrect" class="alert alert--error">
-        <span>The composable is incomplete. Check that you're reading the config, initializing the tracker with the correct parameters, and returning it.</span>
+        <span>The composable is incomplete. Check that you're calling <code>onMounted</code> and <code>onUnmounted</code> with the scroll listener, and returning <code>{ signalStrength }</code>.</span>
       </div>
 
       <!-- Success banner -->
@@ -125,7 +120,7 @@
       <!-- Success bridge -->
       <div v-if="isCorrect" class="bridge-box card">
         <p class="bridge-text">
-          The composable is working — it holds the pure business logic. But calling it directly from a component means re-initializing the tracker on every page load. That's inefficient and breaks singleton state. Level 02 wraps this in a Nuxt plugin so it boots once and is available everywhere.
+          The composable is working — it holds the pure business logic. But calling it directly from a component means re-initializing the tracker on every page load. That's inefficient and breaks singleton state.
         </p>
       </div>
 
@@ -164,46 +159,66 @@
 <script setup lang="ts">
 const game = useGame()
 
-const BROKEN_CODE = `export function useSignalTracker() {
-  const config = useRuntimeConfig()
-  // TODO: read the 'signalEndpoint' from the public config
-  // TODO: initialize the tracker with the endpoint and a 'voyager-1' source
-  // TODO: return { tracker }
+const BROKEN_CODE = `import { ref, onMounted, onUnmounted } from 'vue'
+
+export function useSignalTracker() {
+  const signalStrength = ref(0)
+
+  function update() {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+    signalStrength.value = Math.round((window.scrollY / maxScroll) * 100)
+  }
+
+  // TODO: on mount, add a 'scroll' event listener on window that calls update
+  // TODO: on unmount, remove that same listener
+
+  return { signalStrength }
 }`
 
-const CORRECT_CODE = `export function useSignalTracker() {
-  const config = useRuntimeConfig()
-  const endpoint = config.public.signalEndpoint
-  const tracker = signalTracker.init({
-    endpoint,
-    source: 'voyager-1',
-  })
-  return { tracker }
+const CORRECT_CODE = `import { ref, onMounted, onUnmounted } from 'vue'
+
+export function useSignalTracker() {
+  const signalStrength = ref(0)
+
+  function update() {
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+    signalStrength.value = Math.round((window.scrollY / maxScroll) * 100)
+  }
+
+  onMounted(() => window.addEventListener('scroll', update))
+  onUnmounted(() => window.removeEventListener('scroll', update))
+
+  return { signalStrength }
 }`
 
 const userCode  = ref(BROKEN_CODE)
 const isCorrect = ref(false)
 const showError = ref(false)
 const showHint  = ref(false)
-const demoSignal = ref(50)
+const liveSignal = ref(0)
 
 const composableChecks = computed(() => {
   const c = userCode.value
   return {
-    endpoint:  /config\.public\.signalEndpoint/.test(c),
-    init:      /signalTracker\.init\s*\(\s*\{/.test(c),
-    returned:  /return\s*\{\s*tracker\s*\}/.test(c),
+    onMounted:   /onMounted\s*\(/.test(c),
+    addListener: /window\.addEventListener\s*\(\s*['"]scroll['"]/.test(c),
+    onUnmounted: /onUnmounted\s*\(/.test(c),
+    removeListener: /window\.removeEventListener\s*\(\s*['"]scroll['"]/.test(c),
+    returned:    /return\s*\{\s*signalStrength\s*\}/.test(c),
   }
 })
 
-const checkCount    = computed(() => Object.values(composableChecks.value).filter(Boolean).length)
-const signalPercent = computed(() => isCorrect.value ? 100 : Math.round((checkCount.value / 3) * 80))
 
 function normalize(s: string): string {
-  return s.replace(/\s+/g, ' ').trim()
+  return s
+    .split('\n')
+    .map(line => line.trim().replace(/;$/, ''))
+    .filter(line => line.length > 0)
+    .join('\n')
+    .trim()
 }
 
-function getDemoColor(value: number): string {
+function getSignalColor(value: number): string {
   if (value < 40) return 'red'
   if (value < 80) return 'orange'
   return 'green'
@@ -226,10 +241,28 @@ function resetCode() {
   showHint.value  = false
 }
 
+watch(isCorrect, (correct) => {
+  if (correct) {
+    liveSignal.value = 10
+    const startTime = Date.now()
+    const duration = 3000
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      liveSignal.value = 10 + (70 * progress)
+      if (progress >= 1) {
+        liveSignal.value = 75
+        clearInterval(interval)
+      }
+    }, 30)
+  }
+}, { flush: 'post' })
+
 onMounted(() => {
   if (game.isLevelComplete(1)) {
     isCorrect.value = true
     userCode.value  = CORRECT_CODE
+    liveSignal.value = 75
   }
 })
 </script>
@@ -680,21 +713,77 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.status-critical {
-  color: #ef4444;
+/* Signal tracker (live animation) */
+.signal-tracker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.status-weak {
-  color: #f97316;
+.signal-tracker__header {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-.status-strong {
-  color: #22c55e;
+.signal-tracker__container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.status-blinking {
+.signal-tracker__bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__bar {
+  width: 100%;
+  height: 40px;
+  border: 2px solid rgba(52, 211, 153, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-tracker__fill {
+  height: 100%;
+  transition: width 0.05s linear;
+}
+
+.signal-tracker__fill[style*="width: 100%"] {
+  animation: none;
+}
+
+.signal-tracker__fill:not([style*="width: 100%"]) {
+  animation: blink 0.5s infinite;
+}
+
+.signal-tracker__status {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signal-tracker__value {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 700;
   color: var(--gold);
-  animation: pulse 0.8s ease-in-out infinite;
+  min-width: 60px;
+  text-align: center;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 .bridge-box {

@@ -32,7 +32,7 @@
         </div>
 
         <!-- Signal bar -->
-        <SignalBar :percent="signalPercent" :correct="isCorrect" />
+        <!-- <SignalBar :percent="signalPercent" :correct="isCorrect" /> -->
 
         <!-- Plugin Validator panel -->
         <div class="test-panel card">
@@ -76,6 +76,30 @@
             :disabled="isCorrect"
             rows="12"
           />
+        </div>
+
+        <!-- Live Signal Tracker -->
+        <div class="signal-tracker card">
+          <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
+          <div class="signal-tracker__container">
+            <div class="signal-tracker__bar-wrapper">
+              <div class="signal-tracker__bar">
+                <div
+                  class="signal-tracker__fill"
+                  :style="{
+                    width: liveSignal + '%',
+                    backgroundColor: getSignalColor(liveSignal),
+                  }"
+                />
+              </div>
+            </div>
+            <div class="signal-tracker__status">
+              <span class="signal-tracker__value">{{ Math.round(liveSignal) }}%</span>
+              <span v-if="liveSignal < 40" class="status-critical">🔴 CRITICAL</span>
+              <span v-else-if="liveSignal < 80" class="status-weak">🟠 WEAK</span>
+              <span v-else class="status-strong">🟢 STRONG</span>
+            </div>
+          </div>
         </div>
 
         <!-- Hint -->
@@ -151,22 +175,34 @@ const BROKEN_CODE = `export default defineNuxtPlugin({
 })`
 
 const CORRECT_CODE = `export default defineNuxtPlugin({
-  name: 'signal-tracker',
+  name: "signal-tracker",
   setup() {
-    const { tracker } = useSignalTracker()
+    const { tracker } = useSignalTracker();
     return {
       provide: { signalTracker: tracker },
-    }
+    };
   },
-})`
+});`
 
 const userCode  = ref(BROKEN_CODE)
 const isCorrect = ref(false)
 const showError = ref(false)
 const showHint  = ref(false)
+const liveSignal = ref(75)
 
 function normalize(s: string): string {
-  return s.replace(/\s+/g, ' ').trim()
+  return s
+    .split('\n')
+    .map(line => line.trim().replace(/;$/, ''))
+    .filter(line => line.length > 0)
+    .join('\n')
+    .trim()
+}
+
+function getSignalColor(value: number): string {
+  if (value < 40) return 'red'
+  if (value < 80) return 'orange'
+  return 'green'
 }
 
 const pluginChecks = computed(() => {
@@ -200,6 +236,30 @@ function resetCode() {
   showError.value = false
   showHint.value  = false
 }
+
+watch(isCorrect, (correct) => {
+  if (correct) {
+    liveSignal.value = 75
+    const startTime = Date.now()
+    const duration = 3000
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      liveSignal.value = 75 + (20 * progress)
+      if (progress >= 1) {
+        liveSignal.value = 95
+        clearInterval(interval)
+      }
+    }, 30)
+  }
+}, { flush: 'post' })
+
+onMounted(() => {
+  if (game.isLevelComplete(2)) {
+    isCorrect.value = true
+    liveSignal.value = 95
+  }
+})
 
 onMounted(() => {
   if (game.isLevelComplete(2)) {
@@ -337,5 +397,90 @@ onMounted(() => {
 .btn--sm {
   padding: 8px 16px;
   font-size: 0.75rem;
+}
+
+/* Signal tracker (live animation) */
+.signal-tracker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__header {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.signal-tracker__container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signal-tracker__bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__bar {
+  width: 100%;
+  height: 40px;
+  border: 2px solid rgba(52, 211, 153, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-tracker__fill {
+  height: 100%;
+  transition: width 0.05s linear;
+}
+
+.signal-tracker__fill[style*="width: 100%"] {
+  animation: none;
+}
+
+.signal-tracker__fill:not([style*="width: 100%"]) {
+  animation: blink 0.5s infinite;
+}
+
+.signal-tracker__status {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signal-tracker__value {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+.status-critical {
+  color: #ef4444;
+}
+
+.status-weak {
+  color: #f97316;
+}
+
+.status-strong {
+  color: #22c55e;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 </style>

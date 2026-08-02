@@ -20,7 +20,7 @@
           </p>
         </div>
 
-        <SignalBar :percent="signalPercent" :correct="isCorrect" />
+        <!-- <SignalBar :percent="signalPercent" :correct="isCorrect" /> -->
 
         <!-- Challenge 1 -->
         <div class="challenge-section">
@@ -99,35 +99,32 @@ const { $missionStatus } = useNuxtApp()
 
         <!-- Challenge 4 -->
         <div class="challenge-section">
-          <div class="challenge-title">Challenge 4: Register & Apply the Directive</div>
-
-          <!-- Reference: plugin that provides the directive -->
-          <div class="reference-block">
-            <div class="reference-label">Reference: plugins/signal-lock.ts</div>
-            <pre class="reference-code"><code>export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.directive('signal-lock', {
-    mounted(el: HTMLElement) {
-      el.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
-      el.focus()
-    },
-  })
-})</code></pre>
-          </div>
+          <div class="challenge-title">Challenge 4: Write the Directive Plugin</div>
 
           <div class="test-panel card">
             <div class="test-panel__cases">
               <div :class="['test-case', ch4.directive ? 'test-case--pass' : 'test-case--fail']">
                 <span class="test-case__icon">{{ ch4.directive ? '✓' : '✗' }}</span>
-                <span class="test-case__label">v-signal-lock applied to input</span>
+                <span class="test-case__label">defineNuxtPlugin with directive</span>
               </div>
             </div>
           </div>
+
           <div class="level-page__editor-wrap">
-            <div class="level-page__editor-label font-mono">components/MissionInput.vue</div>
-            <textarea v-model="code4" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="6" :disabled="isCorrect" />
+            <div class="level-page__editor-label font-mono">plugins/signal-focus.ts</div>
+            <textarea v-model="code4" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="10" :disabled="isCorrect" />
+          </div>
+
+          <!-- Reference: usage in component -->
+          <div class="reference-block">
+            <div class="reference-label">Usage in Component</div>
+            <pre class="reference-code"><code>&lt;script setup lang="ts"&gt;
+// The directive is globally registered by the plugin
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;input v-signal-focus /&gt;
+&lt;/template&gt;</code></pre>
           </div>
         </div>
 
@@ -149,7 +146,31 @@ const { $missionStatus } = useNuxtApp()
           </button>
           <button v-if="!isCorrect" class="btn btn--ghost" @click="resetCode">Reset</button>
           <button v-if="!isCorrect" class="btn btn--primary" @click="checkAnswer">▶ Transmit</button>
-          <NuxtLink v-if="isCorrect" to="/finale" class="btn btn--success">View Finale →</NuxtLink>
+          <NuxtLink v-if="isCorrect && liveSignal >= 99" to="/finale" class="btn btn--success">View Finale →</NuxtLink>
+        </div>
+
+        <!-- Live Signal Tracker -->
+        <div class="signal-tracker card">
+          <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
+          <div class="signal-tracker__container">
+            <div class="signal-tracker__bar-wrapper">
+              <div class="signal-tracker__bar">
+                <div
+                  class="signal-tracker__fill"
+                  :style="{
+                    width: liveSignal + '%',
+                    backgroundColor: getSignalColor(liveSignal),
+                  }"
+                />
+              </div>
+            </div>
+            <div class="signal-tracker__status">
+              <span class="signal-tracker__value">{{ Math.round(liveSignal) }}%</span>
+              <span v-if="liveSignal < 40" class="status-critical">🔴 CRITICAL</span>
+              <span v-else-if="liveSignal < 80" class="status-weak">🟠 WEAK</span>
+              <span v-else class="status-strong">🟢 STRONG</span>
+            </div>
+          </div>
         </div>
       </template>
     </div>
@@ -157,7 +178,6 @@ const { $missionStatus } = useNuxtApp()
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
 const game = useGame()
 const locked = computed(() => !game.canAccessLevel(3))
 
@@ -191,14 +211,22 @@ const code3 = ref(`export default defineNuxtPlugin({
   }
 })`)
 
-const code4 = ref(`<template>
-  <input />
-</template>
-`)
+const code4 = ref(`export default defineNuxtPlugin((nuxtApp) => {
+  // TODO
+})`)
+
+const CORRECT_CODE_4 = `export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.directive('signal-focus', {
+    mounted(el: HTMLElement) {
+      el.focus()
+    },
+  })
+})`
 
 const isCorrect = ref(false)
 const showError = ref(false)
 const showHint = ref(false)
+const liveSignal = ref(95)
 
 const ch1 = computed(() => ({
   parallel: /parallel\s*:\s*true/.test(code1.value)
@@ -213,7 +241,9 @@ const ch3 = computed(() => ({
 }))
 
 const ch4 = computed(() => ({
-  directive: /v-signal-lock/.test(code4.value)
+  directive: /nuxtApp\.vueApp\.directive\s*\(\s*['"]signal-focus['"]/.test(code4.value) &&
+             /mounted\s*\(\s*el\s*:\s*HTMLElement\s*\)/.test(code4.value) &&
+             /el\.focus\s*\(\s*\)/.test(code4.value)
 }))
 
 const allPass = computed(() =>
@@ -229,12 +259,17 @@ const signalPercent = computed(() => {
   return Math.round((count / 4) * 80)
 })
 
+function getSignalColor(value: number): string {
+  if (value < 40) return 'red'
+  if (value < 80) return 'orange'
+  return 'green'
+}
+
 function checkAnswer() {
   if (allPass.value) {
     isCorrect.value = true
     showError.value = false
     game.completeLevel(3)
-    setTimeout(() => router.push('/finale'), 2000)
   } else {
     showError.value = true
   }
@@ -268,17 +303,35 @@ function resetCode() {
     // TODO: provide missionStatus function
   }
 })`
-  code4.value = `<template>
-  <input />
-</template>
-`
+  code4.value = `export default defineNuxtPlugin((nuxtApp) => {
+  // TODO
+})`
   showError.value = false
   showHint.value = false
 }
 
+watch(isCorrect, (correct) => {
+  if (correct) {
+    liveSignal.value = 95
+    const startTime = Date.now()
+    const duration = 8000
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      liveSignal.value = 95 + (4 * progress)
+      if (progress >= 1) {
+        liveSignal.value = 99
+        clearInterval(interval)
+      }
+    }, 30)
+  }
+}, { flush: 'post' })
+
 onMounted(() => {
   if (game.isLevelComplete(3)) {
     isCorrect.value = true
+    code4.value = CORRECT_CODE_4
+    liveSignal.value = 99
   }
 })
 </script>
@@ -473,5 +526,90 @@ onMounted(() => {
 .test-case__label {
   font-family: var(--mono);
   flex: 1;
+}
+
+/* Signal tracker (live animation) */
+.signal-tracker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__header {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.signal-tracker__container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signal-tracker__bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__bar {
+  width: 100%;
+  height: 40px;
+  border: 2px solid rgba(52, 211, 153, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-tracker__fill {
+  height: 100%;
+  transition: width 0.05s linear;
+}
+
+.signal-tracker__fill[style*="width: 100%"] {
+  animation: none;
+}
+
+.signal-tracker__fill:not([style*="width: 100%"]) {
+  animation: blink 0.5s infinite;
+}
+
+.signal-tracker__status {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signal-tracker__value {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+.status-critical {
+  color: #ef4444;
+}
+
+.status-weak {
+  color: #f97316;
+}
+
+.status-strong {
+  color: #22c55e;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 </style>
