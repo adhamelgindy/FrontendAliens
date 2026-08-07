@@ -42,18 +42,18 @@
           <div class="test-panel__cases">
             <div :class="['test-case', pluginChecks.composable ? 'test-case--pass' : 'test-case--fail']">
               <span class="test-case__icon">{{ pluginChecks.composable ? '✓' : '✗' }}</span>
-              <span class="test-case__label">useSignalTracker() called</span>
-              <span class="test-case__expect">— composable not called</span>
+              <span class="test-case__label">useSignalTracker composable called</span>
+              <!-- <span class="test-case__expect">— composable not called</span> -->
             </div>
             <div :class="['test-case', pluginChecks.setup ? 'test-case--pass' : 'test-case--fail']">
               <span class="test-case__icon">{{ pluginChecks.setup ? '✓' : '✗' }}</span>
-              <span class="test-case__label">setup() function defined</span>
-              <span class="test-case__expect">— setup missing</span>
+              <span class="test-case__label">setup function defined</span>
+              <!-- <span class="test-case__expect">— setup missing</span> -->
             </div>
             <div :class="['test-case', pluginChecks.provide ? 'test-case--pass' : 'test-case--fail']">
               <span class="test-case__icon">{{ pluginChecks.provide ? '✓' : '✗' }}</span>
               <span class="test-case__label">provide: { signalTracker: ... }</span>
-              <span class="test-case__expect">— tracker not provided</span>
+              <!-- <span class="test-case__expect">— tracker not provided</span> -->
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@
         <!-- Success bridge -->
         <div v-if="isCorrect" class="bridge-box card">
           <p class="bridge-text">
-            The plugin runs — but it's crashing on first load. useRouter() is being called before the router is ready. Another plugin owns the router, and signal-tracker is loading before it. Level 03 fixes this by declaring plugin dependencies.
+            The plugin now boots once at startup and provides the signal tracker app-wide. But plugins can have ordering issues — when one plugin depends on another, execution order matters. Level 03 teaches you how to declare and manage those dependencies.
           </p>
         </div>
 
@@ -165,21 +165,24 @@ const game = useGame()
 
 const locked = computed(() => !game.canAccessLevel(2))
 
-const BROKEN_CODE = `export default defineNuxtPlugin({
+const BROKEN_CODE = `import { useSignalTracker } from '#app/composables'
+
+export default defineNuxtPlugin({
   name: 'signal-tracker',
   setup() {
     // TODO: call useSignalTracker to get the tracker instance
-    // TODO: wire router.afterEach to call tracker.capture on each route change
     // TODO: provide it as 'signalTracker'
   },
 })`
 
-const CORRECT_CODE = `export default defineNuxtPlugin({
+const CORRECT_CODE = `import { useSignalTracker } from "#app/composables";
+
+export default defineNuxtPlugin({
   name: "signal-tracker",
   setup() {
-    const { tracker } = useSignalTracker();
+    const { signalStrength } = useSignalTracker();
     return {
-      provide: { signalTracker: tracker },
+      provide: { signalTracker: signalStrength },
     };
   },
 });`
@@ -190,14 +193,6 @@ const showError = ref(false)
 const showHint  = ref(false)
 const liveSignal = ref(75)
 
-function normalize(s: string): string {
-  return s
-    .split('\n')
-    .map(line => line.trim().replace(/;$/, ''))
-    .filter(line => line.length > 0)
-    .join('\n')
-    .trim()
-}
 
 function getSignalColor(value: number): string {
   if (value < 40) return 'red'
@@ -222,7 +217,10 @@ const signalPercent = computed(() => {
 })
 
 function checkAnswer() {
-  if (normalize(userCode.value) === normalize(CORRECT_CODE)) {
+  const checks = pluginChecks.value
+  const allChecksPassed = checks.composable && checks.setup && checks.provide
+
+  if (allChecksPassed) {
     isCorrect.value = true
     showError.value = false
     game.completeLevel(2)

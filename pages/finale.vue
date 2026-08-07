@@ -95,172 +95,36 @@
         </button>
       </div>
 
-      <!-- ── Reveal ── -->
-      <template v-if="puzzleSolved">
-
-      <!-- Record restored headline -->
-      <div class="finale__reveal">
-        <div class="finale__record-wrap">
-          <div class="record" />
-          <div class="finale__record-glow" />
-        </div>
-        <h2 class="finale__reveal-title font-title">
-          Golden Record<br />
-          <span class="finale__title--accent">Restored</span>
-        </h2>
-        <p class="finale__subtitle">
-          Voyager 1 — Back Online Forever
-        </p>
-      </div>
-
-      <!-- Stats row -->
-      <div class="stat-row finale__stats">
-        <div class="stat-tile">
-          <div class="stat-tile__value text-green">3</div>
-          <div class="stat-tile__label">Levels</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile__value text-green">✓</div>
-          <div class="stat-tile__label">Mission</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile__value" style="font-size:1.4rem;">🍔</div>
-          <div class="stat-tile__label">Reward</div>
-        </div>
-      </div>
-
-      <!-- Mission log -->
-      <div class="mission-log card" ref="logRef">
-        <div class="mission-log__header font-mono">
-          {{ typedHeader }}<span v-if="typingHeader" class="cursor">▌</span>
-        </div>
-        <div class="mission-log__entries">
-          <div
-            v-for="(entry, i) in logEntries"
-            :key="entry.time"
-            class="log-entry"
-            :class="{ 'log-entry--visible': i < visibleEntries }"
-          >
-            <span class="log-entry__time font-mono text-muted">{{ typed[i]?.time ?? '' }}<span v-if="typingEntry === i && typingField === 'time'" class="cursor">▌</span></span>
-            <span :class="['log-entry__status', 'font-mono', entry.statusClass]">
-              {{ typed[i]?.status ?? '' }}<span v-if="typingEntry === i && typingField === 'status'" class="cursor">▌</span>
-            </span>
-            <span class="log-entry__msg">{{ typed[i]?.msg ?? '' }}<span v-if="typingEntry === i && typingField === 'msg'" class="cursor">▌</span></span>
+      <!-- Live Signal Tracker -->
+      <div v-if="puzzleSolved" class="signal-tracker card">
+        <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
+        <div class="signal-tracker__container">
+          <div class="signal-tracker__bar-wrapper">
+            <div class="signal-tracker__bar">
+              <div
+                class="signal-tracker__fill"
+                :style="{
+                  width: liveSignal + '%',
+                  backgroundColor: getSignalColor(liveSignal),
+                }"
+              />
+            </div>
+          </div>
+          <div class="signal-tracker__status">
+            <span class="signal-tracker__value font-mono">{{ Math.round(liveSignal) }}%</span>
+            <span v-if="liveSignal < 40" class="status-critical">🔴 CRITICAL</span>
+            <span v-else-if="liveSignal < 100" class="status-weak">🟠 WEAK</span>
+            <span v-else class="status-strong">🟢 SIGNAL LOCKED</span>
           </div>
         </div>
       </div>
 
-      <!-- Comparison table — What you learned -->
-      <div class="comparison card">
-        <div class="comparison__title font-mono" style="font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; color:var(--muted);">
-          Plugin Registration Order
-        </div>
-        <table class="comparison__table">
-          <thead>
-            <tr>
-              <th>Filename</th>
-              <th>Sorts as</th>
-              <th>Boot position</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="comparison__layer">01.signal-config.ts</td>
-              <td class="font-mono">"01..." → boots 1st</td>
-              <td>Smallest prefix — always first</td>
-            </tr>
-            <tr>
-              <td class="comparison__layer">10.signal-tracker.ts</td>
-              <td class="font-mono">"10..." → boots 2nd</td>
-              <td>"10" &lt; "2" as strings — 1 sorts before 2</td>
-            </tr>
-            <tr>
-              <td class="comparison__layer">2.mission-helper.ts</td>
-              <td class="font-mono">"2..." → boots 3rd</td>
-              <td>"2" &gt; "10" alphabetically — the trap</td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="comparison__caption text-muted" style="font-size:0.75rem; margin-top:14px;">
-          Filenames sort as strings. "10" comes before "2". Always zero-pad single digits.
-        </p>
+      <!-- Entity CTA -->
+      <div v-if="liveSignal >= 100" class="finale__run">
+        <NuxtLink to="/outro" class="btn btn--success btn--large">
+          ▶ Run the golden record 
+        </NuxtLink>
       </div>
-
-      <!-- Alien message -->
-      <div class="alien-box card">
-        <div class="alien-box__eyebrow eyebrow" style="margin-bottom:12px;">
-          Decoded Alien Response
-        </div>
-        <p class="alien-box__msg font-mono">
-          "WE RECEIVED YOUR GOLDEN RECORD. YOUR MUSIC IS BEAUTIFUL.
-          WE ESPECIALLY LIKED 'The double cheese Burger'.
-          WE HAVE SENT OUR OWN RECORD IN RESPONSE.
-          IT ARRIVES IN APPROXIMATELY 40,000 light YEARS.
-          In the mean time, please watch this video to learn our ways..."
-        </p>
-        <p class="alien-box__sig text-muted font-mono" style="font-size:0.72rem; margin-top:12px; letter-spacing:0.1em;">
-          — TRANSMISSION ORIGIN: UNKNOWN / DISTANCE: ∞
-        </p>
-      </div>
-
-      <!-- YouTube embed -->
-      <div class="video-wrap card">
-        <div class="video-wrap__label font-mono" style="font-size:0.72rem; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; margin-bottom:14px;">
-          Golden Record — Original Audio
-        </div>
-        <div class="video-wrap__player">
-          <template v-if="!videoPlaying">
-            <button class="video-thumb" @click="videoPlaying = true" aria-label="Play Golden Record video">
-              <div class="video-thumb__bg" />
-              <div class="video-thumb__overlay">
-                <div class="video-thumb__play">▶</div>
-                <p class="video-thumb__title font-mono">
-                  Voyager Golden Record — Sounds of Earth
-                </p>
-              </div>
-            </button>
-          </template>
-          <template v-else>
-            <iframe
-              class="video-iframe"
-              src="https://www.youtube.com/embed/v6oC2tPKdec?autoplay=1&rel=0"
-              title="Voyager Golden Record — Sounds of Earth"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-            />
-          </template>
-        </div>
-      </div>
-
-      <!-- Play again -->
-      <div class="finale__actions">
-        <button class="btn btn--primary btn--large" @click="handlePlayAgain">
-          ↺ Play Again
-        </button>
-        <a
-          href="https://youtu.be/v6oC2tPKdec"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn btn--ghost"
-        >
-          Listen on YouTube ↗
-        </a>
-      </div>
-
-      <!-- Footer -->
-      <footer class="finale__footer font-mono">
-        <p>
-          Voyager 1 — Launched September 5, 1977 &nbsp;·&nbsp;
-          Still transmitting &nbsp;·&nbsp;
-          23.6 billion km from Earth
-        </p>
-        <p class="text-muted" style="font-size:0.7rem; margin-top:6px;">
-          Built with Nuxt 3 — component, plugin, and build layers fully restored.
-        </p>
-      </footer>
-
-      </template><!-- end puzzleSolved reveal -->
 
     </div>
   </div>
@@ -271,7 +135,14 @@ const router = useRouter()
 const game   = useGame()
 const { triggerRestoration } = useSystemRestoration()
 
-const videoPlaying = ref(false)
+const liveSignal = ref(0)
+
+function getSignalColor(value: number): string {
+  if (value < 40) return 'red'
+  if (value < 80) return 'orange'
+  return 'green'
+}
+
 
 // ── Drag-and-drop puzzle ──────────────────────────────────────────────────
 
@@ -369,6 +240,18 @@ function resetPuzzle() {
   placements.value = {}
   showPuzzleError.value = false
 }
+
+watch(puzzleSolved, (solved) => {
+  if (!solved) return
+  const startTime = Date.now()
+  const duration = 2500
+  const interval = setInterval(() => {
+    const elapsed = Date.now() - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    liveSignal.value = Math.round(progress * 100)
+    if (progress >= 1) clearInterval(interval)
+  }, 30)
+})
 
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -1013,6 +896,75 @@ onMounted(() => {
   color: var(--gold);
   font-style: normal;
   font-weight: 600;
+}
+
+/* Signal tracker */
+.signal-tracker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__header {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.signal-tracker__container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signal-tracker__bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signal-tracker__bar {
+  width: 100%;
+  height: 40px;
+  border: 2px solid rgba(52, 211, 153, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-tracker__fill {
+  height: 100%;
+  transition: width 0.05s linear, background-color 0.3s;
+}
+
+.signal-tracker__status {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signal-tracker__value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+.status-critical { color: #ef4444; }
+.status-weak     { color: #f97316; }
+.status-strong   { color: #22c55e; }
+
+.finale__run {
+  display: flex;
+  justify-content: center;
+  animation: reveal-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 /* Footer */

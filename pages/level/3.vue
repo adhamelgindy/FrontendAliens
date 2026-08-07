@@ -24,7 +24,10 @@
 
         <!-- Challenge 1 -->
         <div class="challenge-section">
-          <div class="challenge-title">Challenge 1: Parallel Execution</div>
+          <div class="challenge-title-with-doc">
+            <span>Challenge 1: Parallel Execution</span>
+            <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#parallel-plugins" target="_blank" class="doc-link-inline">→ Docs</a>
+          </div>
           <div class="test-panel card">
             <div class="test-panel__cases">
               <div :class="['test-case', ch1.parallel ? 'test-case--pass' : 'test-case--fail']">
@@ -44,7 +47,10 @@
 
         <!-- Challenge 2 -->
         <div class="challenge-section">
-          <div class="challenge-title">Challenge 2: Plugin Dependencies</div>
+          <div class="challenge-title-with-doc">
+            <span>Challenge 2: Plugin Dependencies</span>
+            <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#plugins-with-dependencies" target="_blank" class="doc-link-inline">→ Docs</a>
+          </div>
           <div class="test-panel card">
             <div class="test-panel__cases">
               <div :class="['test-case', ch2.dependsOn ? 'test-case--pass' : 'test-case--fail']">
@@ -64,7 +70,10 @@
 
         <!-- Challenge 3 -->
         <div class="challenge-section">
-          <div class="challenge-title">Challenge 3: Provide Helper</div>
+          <div class="challenge-title-with-doc">
+            <span>Challenge 3: Provide Helper</span>
+            <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#providing-helpers" target="_blank" class="doc-link-inline">→ Docs</a>
+          </div>
           <div class="test-panel card">
             <div class="test-panel__cases">
               <div :class="['test-case', ch3.provide ? 'test-case--pass' : 'test-case--fail']">
@@ -99,7 +108,10 @@ const { $missionStatus } = useNuxtApp()
 
         <!-- Challenge 4 -->
         <div class="challenge-section">
-          <div class="challenge-title">Challenge 4: Write the Directive Plugin</div>
+          <div class="challenge-title-with-doc">
+            <span>Challenge 4: Write the Directive Plugin</span>
+            <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#vue-directives" target="_blank" class="doc-link-inline">→ Docs</a>
+          </div>
 
           <div class="test-panel card">
             <div class="test-panel__cases">
@@ -196,7 +208,7 @@ const code1 = ref(`export default defineNuxtPlugin({
 
 const code2 = ref(`export default defineNuxtPlugin({
   name: 'signal-tracker',
-  // TODO
+  // TODO depends on signal-config 
   setup(nuxtApp) {
     const config = nuxtApp.$signalConfig
     const tracker = createTracker(config.endpoint)
@@ -351,6 +363,18 @@ onMounted(() => {
   letter-spacing: 0.05em;
 }
 
+.challenge-title-with-doc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gold);
+  font-family: var(--mono);
+  letter-spacing: 0.05em;
+}
+
 .challenge-description {
   font-size: 0.85rem;
   color: var(--muted);
@@ -389,6 +413,37 @@ onMounted(() => {
 .reference-code code {
   font-family: var(--mono);
   color: var(--text);
+}
+
+.doc-link {
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 600;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.doc-link:hover {
+  color: var(--orange);
+  text-decoration: underline;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+.doc-link-inline {
+  color: var(--orange);
+  text-decoration: none;
+  font-weight: 600;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.doc-link-inline:hover {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 .level-page {
@@ -463,6 +518,16 @@ onMounted(() => {
   line-height: 1.5;
   resize: none;
   overflow-y: auto;
+}
+
+.level-page__editor-wrap .code-editor {
+  border: none;
+  border-radius: 0;
+}
+
+.level-page__editor-wrap .code-editor:focus {
+  border: none;
+  outline: none;
 }
 
 .code-editor:focus {

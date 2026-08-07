@@ -14,7 +14,7 @@
       <div class="level-page__header">
         <p class="eyebrow">Architecture Layer One</p>
         <h1 class="level-page__title font-title">
-          Level 01 — Write the Composable
+          Level 01 — Warm up: Composable 
         </h1>
         <p class="level-page__narrative">
           Voyager's signal grows stronger the deeper it drifts into space. The <code>update()</code> function is ready — but nobody told the composable when to start or stop listening. Wire up the scroll listener using Vue's lifecycle hooks.
@@ -39,19 +39,19 @@
           >
             <span class="test-case__icon">{{ check ? '✓' : '✗' }}</span>
             <span class="test-case__label">
-              <span v-if="key === 'onMounted'">onMounted(() => ...)</span>
-              <span v-else-if="key === 'addListener'">window.addEventListener('scroll', update)</span>
-              <span v-else-if="key === 'onUnmounted'">onUnmounted(() => ...)</span>
-              <span v-else-if="key === 'removeListener'">window.removeEventListener('scroll', update)</span>
-              <span v-else-if="key === 'returned'">return { signalStrength }</span>
+              <span v-if="key === 'onMounted'">onMounted</span>
+              <span v-else-if="key === 'addListener'">add update on scroll Listener</span>
+              <span v-else-if="key === 'onUnmounted'">onUnmounted</span>
+              <span v-else-if="key === 'removeListener'">remove update on scroll Listener</span>
+              <span v-else-if="key === 'returned'">return signalStrength</span>
             </span>
-            <span class="test-case__expect">
+            <!-- <span class="test-case__expect">
               <span v-if="key === 'onMounted'">— not called</span>
               <span v-else-if="key === 'addListener'">— listener not added</span>
               <span v-else-if="key === 'onUnmounted'">— not called</span>
               <span v-else-if="key === 'removeListener'">— listener not removed</span>
               <span v-else-if="key === 'returned'">— not returned</span>
-            </span>
+            </span> -->
           </div>
         </div>
       </div>
@@ -77,8 +77,9 @@
       </div>
 
       <!-- Live Signal Tracker -->
-      <div class="signal-tracker card">
+      <div class="signal-tracker card" @wheel.prevent="onTrackerScroll">
         <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
+        <div v-if="isCorrect && liveSignal < 75" class="signal-tracker__hint font-mono">↕ scroll here to tune the signal</div>
         <div class="signal-tracker__container">
           <div class="signal-tracker__bar-wrapper">
             <div class="signal-tracker__bar">
@@ -171,25 +172,26 @@ export function useSignalTracker() {
 
   // TODO: on mount, add a 'scroll' event listener on window that calls update
   // TODO: on unmount, remove that same listener
-
-  return { signalStrength }
+  // TODO: return signalStrength
 }`
 
-const CORRECT_CODE = `import { ref, onMounted, onUnmounted } from 'vue'
+const CORRECT_CODE = `
+import { ref, onMounted, onUnmounted } from "vue";
 
 export function useSignalTracker() {
-  const signalStrength = ref(0)
+  const signalStrength = ref(0);
 
   function update() {
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-    signalStrength.value = Math.round((window.scrollY / maxScroll) * 100)
+    const maxScroll =
+      document.documentElement.scrollHeight - window.innerHeight;
+    signalStrength.value = Math.round((window.scrollY / maxScroll) * 100);
   }
 
-  onMounted(() => window.addEventListener('scroll', update))
-  onUnmounted(() => window.removeEventListener('scroll', update))
-
-  return { signalStrength }
-}`
+  onMounted(() => window.addEventListener("scroll", update));
+  onUnmounted(() => window.removeEventListener("scroll", update));
+  return { signalStrength };
+}
+`
 
 const userCode  = ref(BROKEN_CODE)
 const isCorrect = ref(false)
@@ -199,24 +201,20 @@ const liveSignal = ref(0)
 
 const composableChecks = computed(() => {
   const c = userCode.value
+  const codeOnly = c
+    .split('\n')
+    .filter(line => !line.trim().startsWith('//'))
+    .join('\n')
   return {
-    onMounted:   /onMounted\s*\(/.test(c),
-    addListener: /window\.addEventListener\s*\(\s*['"]scroll['"]/.test(c),
-    onUnmounted: /onUnmounted\s*\(/.test(c),
-    removeListener: /window\.removeEventListener\s*\(\s*['"]scroll['"]/.test(c),
-    returned:    /return\s*\{\s*signalStrength\s*\}/.test(c),
+    onMounted:   /onMounted\s*\(/.test(codeOnly),
+    addListener: /window\.addEventListener\s*\(\s*['"]scroll['"]/.test(codeOnly),
+    onUnmounted: /onUnmounted\s*\(/.test(codeOnly),
+    removeListener: /window\.removeEventListener\s*\(\s*['"]scroll['"]/.test(codeOnly),
+    returned:    /return\s*\{\s*signalStrength\s*\}/.test(codeOnly),
   }
 })
 
 
-function normalize(s: string): string {
-  return s
-    .split('\n')
-    .map(line => line.trim().replace(/;$/, ''))
-    .filter(line => line.length > 0)
-    .join('\n')
-    .trim()
-}
 
 function getSignalColor(value: number): string {
   if (value < 40) return 'red'
@@ -225,10 +223,12 @@ function getSignalColor(value: number): string {
 }
 
 function checkAnswer() {
-  if (normalize(userCode.value) === normalize(CORRECT_CODE)) {
+  const checks = composableChecks.value
+  const allChecksPassed = checks.onMounted && checks.addListener && checks.onUnmounted && checks.removeListener && checks.returned
+
+  if (allChecksPassed) {
     isCorrect.value = true
     showError.value = false
-    userCode.value = CORRECT_CODE
     game.completeLevel(1)
   } else {
     showError.value = true
@@ -241,22 +241,11 @@ function resetCode() {
   showHint.value  = false
 }
 
-watch(isCorrect, (correct) => {
-  if (correct) {
-    liveSignal.value = 10
-    const startTime = Date.now()
-    const duration = 3000
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      liveSignal.value = 10 + (70 * progress)
-      if (progress >= 1) {
-        liveSignal.value = 75
-        clearInterval(interval)
-      }
-    }, 30)
-  }
-}, { flush: 'post' })
+function onTrackerScroll(e: WheelEvent) {
+  if (!isCorrect.value) return
+  const delta = e.deltaY > 0 ? -2 : 2
+  liveSignal.value = Math.min(75, Math.max(0, liveSignal.value + delta))
+}
 
 onMounted(() => {
   if (game.isLevelComplete(1)) {
@@ -726,6 +715,13 @@ onMounted(() => {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.signal-tracker__hint {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  opacity: 0.7;
 }
 
 .signal-tracker__container {
