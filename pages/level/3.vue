@@ -20,10 +20,24 @@
           </p>
         </div>
 
-        <!-- <SignalBar :percent="signalPercent" :correct="isCorrect" /> -->
+        <!-- Step indicator -->
+        <div class="wizard-steps">
+          <button
+            v-for="n in 4"
+            :key="n"
+            :class="['wizard-step', {
+              'wizard-step--active': step === n,
+              'wizard-step--done': stepDone(n),
+            }]"
+            @click="step = n"
+          >
+            <span class="wizard-step__num">{{ n }}</span>
+            <span class="wizard-step__label">{{ stepLabels[n - 1] }}</span>
+          </button>
+        </div>
 
         <!-- Challenge 1 -->
-        <div class="challenge-section">
+        <div v-show="step === 1" class="challenge-section">
           <div class="challenge-title-with-doc">
             <span>Challenge 1: Parallel Execution</span>
             <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#parallel-plugins" target="_blank" class="doc-link-inline">→ Docs</a>
@@ -40,13 +54,13 @@
             Nuxt won't wait until the end of the plugin's execution before loading the next plugin
           </div>
           <div class="level-page__editor-wrap">
-            <div class="level-page__editor-label font-mono">plugins/signal-config.ts</div>
-            <textarea v-model="code1" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="8" :disabled="isCorrect" />
+            <label for="editor-ch1" class="level-page__editor-label font-mono">plugins/signal-config.ts</label>
+            <textarea id="editor-ch1" v-model="code1" class="code-editor" :class="{ 'code-editor--correct': ch1.parallel }" spellcheck="false" rows="8" :disabled="isCorrect" />
           </div>
         </div>
 
         <!-- Challenge 2 -->
-        <div class="challenge-section">
+        <div v-show="step === 2" class="challenge-section">
           <div class="challenge-title-with-doc">
             <span>Challenge 2: Plugin Dependencies</span>
             <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#plugins-with-dependencies" target="_blank" class="doc-link-inline">→ Docs</a>
@@ -60,16 +74,16 @@
             </div>
           </div>
           <div class="challenge-description">
-            Declare that signal-tracker depends on signal-config
+            Declare that signal-tracker depends on signal-config plugin
           </div>
           <div class="level-page__editor-wrap">
-            <div class="level-page__editor-label font-mono">plugins/signal-tracker.ts</div>
-            <textarea v-model="code2" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="10" :disabled="isCorrect" />
+            <label for="editor-ch2" class="level-page__editor-label font-mono">plugins/signal-tracker.ts</label>
+            <textarea id="editor-ch2" v-model="code2" class="code-editor" :class="{ 'code-editor--correct': ch2.dependsOn }" spellcheck="false" rows="10" :disabled="isCorrect" />
           </div>
         </div>
 
         <!-- Challenge 3 -->
-        <div class="challenge-section">
+        <div v-show="step === 3" class="challenge-section">
           <div class="challenge-title-with-doc">
             <span>Challenge 3: Provide Helper</span>
             <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#providing-helpers" target="_blank" class="doc-link-inline">→ Docs</a>
@@ -85,13 +99,10 @@
           <div class="challenge-description">
             To provide a helper on the NuxtApp instance, return it from the plugin under a provide key.
           </div>
-
           <div class="level-page__editor-wrap">
-            <div class="level-page__editor-label font-mono">plugins/mission-helper.ts</div>
-            <textarea v-model="code3" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="10" :disabled="isCorrect" />
+            <label for="editor-ch3" class="level-page__editor-label font-mono">plugins/mission-helper.ts</label>
+            <textarea id="editor-ch3" v-model="code3" class="code-editor" :class="{ 'code-editor--correct': ch3.provide }" spellcheck="false" rows="10" :disabled="isCorrect" />
           </div>
-
-          <!-- Usage example -->
           <div class="reference-block">
             <div class="reference-label">Usage in Component</div>
             <pre class="reference-code"><code>&lt;script setup lang="ts"&gt;
@@ -107,12 +118,11 @@ const { $missionStatus } = useNuxtApp()
         </div>
 
         <!-- Challenge 4 -->
-        <div class="challenge-section">
+        <div v-show="step === 4" class="challenge-section">
           <div class="challenge-title-with-doc">
             <span>Challenge 4: Write the Directive Plugin</span>
             <a href="https://nuxt.com/docs/4.x/directory-structure/app/plugins#vue-directives" target="_blank" class="doc-link-inline">→ Docs</a>
           </div>
-
           <div class="test-panel card">
             <div class="test-panel__cases">
               <div :class="['test-case', ch4.directive ? 'test-case--pass' : 'test-case--fail']">
@@ -121,13 +131,10 @@ const { $missionStatus } = useNuxtApp()
               </div>
             </div>
           </div>
-
           <div class="level-page__editor-wrap">
-            <div class="level-page__editor-label font-mono">plugins/signal-focus.ts</div>
-            <textarea v-model="code4" class="code-editor" :class="{ 'code-editor--correct': isCorrect }" spellcheck="false" rows="10" :disabled="isCorrect" />
+            <label for="editor-ch4" class="level-page__editor-label font-mono">plugins/signal-focus.ts</label>
+            <textarea id="editor-ch4" v-model="code4" class="code-editor" :class="{ 'code-editor--correct': ch4.directive }" spellcheck="false" rows="10" :disabled="isCorrect" />
           </div>
-
-          <!-- Reference: usage in component -->
           <div class="reference-block">
             <div class="reference-label">Usage in Component</div>
             <pre class="reference-code"><code>&lt;script setup lang="ts"&gt;
@@ -152,13 +159,20 @@ const { $missionStatus } = useNuxtApp()
           <span>✧ MISSION CONTROL STABLE ✧</span>
         </div>
 
-        <div class="level-page__actions">
-          <button v-if="!isCorrect" class="btn btn--ghost" @click="showHint = !showHint">
-            {{ showHint ? 'Hide Hint' : 'Request Hint' }}
-          </button>
-          <button v-if="!isCorrect" class="btn btn--ghost" @click="resetCode">Reset</button>
-          <button v-if="!isCorrect" class="btn btn--primary" @click="checkAnswer">▶ Transmit</button>
-          <NuxtLink v-if="isCorrect && liveSignal >= 99" to="/finale" class="btn btn--success">View Finale →</NuxtLink>
+        <!-- Wizard navigation -->
+        <div class="wizard-nav">
+          <div class="wizard-nav__left">
+            <button v-if="!isCorrect" class="btn btn--ghost" @click="showHint = !showHint">
+              {{ showHint ? 'Hide Hint' : 'Request Hint' }}
+            </button>
+            <button v-if="!isCorrect" class="btn btn--ghost" @click="resetCode">Reset</button>
+          </div>
+          <div class="wizard-nav__right">
+            <button v-if="step > 1" class="btn btn--ghost" @click="step--">← Back</button>
+            <button v-if="step < 4" class="btn btn--primary" @click="step++">Next →</button>
+            <button v-if="step === 4 && !isCorrect" class="btn btn--primary" @click="checkAnswer">▶ Transmit</button>
+            <NuxtLink v-if="isCorrect && liveSignal >= 99" to="/finale" class="btn btn--success">View Finale →</NuxtLink>
+          </div>
         </div>
 
         <!-- Live Signal Tracker -->
@@ -193,6 +207,9 @@ const { $missionStatus } = useNuxtApp()
 const game = useGame()
 const locked = computed(() => !game.canAccessLevel(3))
 
+const step = ref(1)
+const stepLabels = ['Parallel', 'Dependencies', 'Provide', 'Directive']
+
 const code1 = ref(`export default defineNuxtPlugin({
   name: 'signal-config',
   // TODO
@@ -208,7 +225,7 @@ const code1 = ref(`export default defineNuxtPlugin({
 
 const code2 = ref(`export default defineNuxtPlugin({
   name: 'signal-tracker',
-  // TODO depends on signal-config 
+  // TODO depends on signal-config
   setup(nuxtApp) {
     const config = nuxtApp.$signalConfig
     const tracker = createTracker(config.endpoint)
@@ -258,18 +275,20 @@ const ch4 = computed(() => ({
              /el\.focus\s*\(\s*\)/.test(code4.value)
 }))
 
+function stepDone(n: number): boolean {
+  if (n === 1) return ch1.value.parallel
+  if (n === 2) return ch2.value.dependsOn
+  if (n === 3) return ch3.value.provide
+  if (n === 4) return ch4.value.directive
+  return false
+}
+
 const allPass = computed(() =>
   ch1.value.parallel &&
   ch2.value.dependsOn &&
   ch3.value.provide &&
   ch4.value.directive
 )
-
-const signalPercent = computed(() => {
-  if (isCorrect.value) return 100
-  const count = [ch1.value.parallel, ch2.value.dependsOn, ch3.value.provide, ch4.value.directive].filter(Boolean).length
-  return Math.round((count / 4) * 80)
-})
 
 function getSignalColor(value: number): string {
   if (value < 40) return 'red'
@@ -355,14 +374,6 @@ onMounted(() => {
   gap: 12px;
 }
 
-.challenge-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--gold);
-  font-family: var(--mono);
-  letter-spacing: 0.05em;
-}
-
 .challenge-title-with-doc {
   display: flex;
   align-items: center;
@@ -380,6 +391,91 @@ onMounted(() => {
   color: var(--muted);
   line-height: 1.5;
   padding: 0 0 8px 0;
+}
+
+/* Wizard step indicator */
+.wizard-steps {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.wizard-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: var(--navy-mid);
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--muted);
+}
+
+.wizard-step:last-child {
+  border-right: none;
+}
+
+.wizard-step:hover {
+  background: var(--navy-dark);
+}
+
+.wizard-step--active {
+  background: var(--navy-dark);
+  color: var(--gold);
+}
+
+.wizard-step--done {
+  color: var(--green);
+}
+
+.wizard-step--active.wizard-step--done {
+  color: var(--green);
+}
+
+.wizard-step__num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.wizard-step--done .wizard-step__num {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.wizard-step__label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Wizard nav bar */
+.wizard-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wizard-nav__left,
+.wizard-nav__right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .reference-block {
@@ -413,22 +509,6 @@ onMounted(() => {
 .reference-code code {
   font-family: var(--mono);
   color: var(--text);
-}
-
-.doc-link {
-  color: var(--gold);
-  text-decoration: none;
-  font-weight: 600;
-  font-family: var(--mono);
-  font-size: 0.85rem;
-  transition: all 0.2s;
-  display: inline-block;
-}
-
-.doc-link:hover {
-  color: var(--orange);
-  text-decoration: underline;
-  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 .doc-link-inline {
@@ -538,12 +618,6 @@ onMounted(() => {
   background: rgba(52, 211, 153, 0.1);
 }
 
-.level-page__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
 .test-panel {
   padding: 16px;
 }
@@ -593,7 +667,7 @@ onMounted(() => {
   flex: 1;
 }
 
-/* Signal tracker (live animation) */
+/* Signal tracker */
 .signal-tracker {
   width: 100%;
   display: flex;
@@ -634,10 +708,6 @@ onMounted(() => {
   transition: width 0.05s linear;
 }
 
-.signal-tracker__fill[style*="width: 100%"] {
-  animation: none;
-}
-
 .signal-tracker__fill:not([style*="width: 100%"]) {
   animation: blink 0.5s infinite;
 }
@@ -661,17 +731,9 @@ onMounted(() => {
   text-align: center;
 }
 
-.status-critical {
-  color: #ef4444;
-}
-
-.status-weak {
-  color: #f97316;
-}
-
-.status-strong {
-  color: #22c55e;
-}
+.status-critical { color: #ef4444; }
+.status-weak { color: #f97316; }
+.status-strong { color: #22c55e; }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }

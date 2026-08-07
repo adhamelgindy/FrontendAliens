@@ -16,7 +16,7 @@
       </div>
       
        <!-- Alien message -->
-      <div v-if="showCta" class="alien-box card">
+      <div v-if="showAlienMsg" class="alien-box card">
         <div class="alien-box__eyebrow eyebrow" style="margin-bottom:12px;">
           Decoded Alien Response
         </div>
@@ -25,10 +25,10 @@
           WE ESPECIALLY LIKED 'The double cheese Burger'.
           WE HAVE SENT OUR OWN RECORD IN RESPONSE.
           IT ARRIVES IN APPROXIMATELY 40,000 light YEARS.
-          In the mean time, please watch this video to learn our ways..."
+          In the mean time, feel free to give me a call, I have something I need to tell you..."
         </p>
         <p class="alien-box__sig font-mono" style="font-size:0.72rem; margin-top:12px; letter-spacing:0.1em; color:var(--muted);">
-          — TRANSMISSION ORIGIN: UNKNOWN / DISTANCE: ∞
+          — TRANSMISSION ORIGIN: Nuxios / DISTANCE: 40,000 light YEARS
         </p>
       </div>
 
@@ -87,9 +87,9 @@
 
       <!-- YouTube embed -->
       <div v-if="showCta" class="video-wrap card">
-        <div class="video-wrap__label font-mono" style="font-size:0.72rem; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; margin-bottom:14px;">
-          Golden Record — Original Audio
-        </div>
+        <!-- <div class="video-wrap__label font-mono" style="font-size:0.72rem; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; margin-bottom:14px;">
+        Here is what we understood about the golden record
+        </div> -->
         <div class="video-wrap__player">
           <template v-if="!videoPlaying">
             <button type="button" class="video-thumb" @click="videoPlaying = true" aria-label="Play Golden Record video">
@@ -97,7 +97,7 @@
               <div class="video-thumb__overlay">
                 <div class="video-thumb__play">▶</div>
                 <p class="video-thumb__title font-mono">
-                  Voyager Golden Record — Sounds of Earth
+                  Voyager Golden Record
                 </p>
               </div>
             </button>
@@ -120,6 +120,9 @@
       </div>
 
     </div>
+
+    <!-- ElevenLabs Nuxios voice agent -->
+    <elevenlabs-convai agent-id="agent_6601kze39y7rer8b4yryjqr6db3d" />
   </div>
 </template>
 
@@ -129,6 +132,7 @@ const game   = useGame()
 
 const entityTyped    = ref('')
 const typingHeadline = ref(false)
+const showAlienMsg   = ref(false)
 const showGrail      = ref(false)
 const layersVisible  = ref(0)
 const showCode       = ref(false)
@@ -162,6 +166,9 @@ async function runSequence() {
   typingHeadline.value = false
 
   await wait(600)
+  showAlienMsg.value = true
+
+  await wait(2200)
   showGrail.value = true
   await wait(200)
   layersVisible.value = 1

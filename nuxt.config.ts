@@ -14,6 +14,12 @@ export default defineNuxtConfig({
             "Voyager 1's signal is corrupted. Debug three critical systems before the spacecraft is lost forever.",
         },
       ],
+      script: [
+        {
+          src: 'https://elevenlabs.io/convai-widget/index.js',
+          async: true,
+        },
+      ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         {
@@ -39,4 +45,10 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-11-01',
+
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => tag === 'elevenlabs-convai',
+    },
+  },
 })
