@@ -11,9 +11,6 @@
           Order the Plugins<br />
           <span class="finale__title--accent">By Boot Sequence</span>
         </h1>
-        <p class="finale__subtitle-pre font-mono">
-          Filenames sort as strings — not numbers
-        </p>
       </div>
 
       <!-- Explanation -->

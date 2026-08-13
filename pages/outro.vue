@@ -9,7 +9,7 @@
           <div class="entity-hex-glow" />
           <div class="entity-hex">⬡</div>
         </div>
-        <p class="eyebrow entity-eyebrow">ENTITY DETECTED — NUXT PRIME</p>
+        <p class="eyebrow entity-eyebrow">CONGRATS</p>
         <h1 class="entity-headline font-title">
           <span class="entity-typed">{{ entityTyped }}</span><span v-if="typingHeadline" class="cursor">█</span>
         </h1>
@@ -35,31 +35,39 @@
       <!-- Holy Grail card -->
       <div v-if="showGrail" class="holy-grail card">
         <!-- <p class="holy-grail__eyebrow font-mono">THE HOLY GRAIL OF NUXT</p> -->
-        <p class="holy-grail__sub">The Three-Layer Architecture</p>
+        <p class="holy-grail__sub">Know the difference</p>
 
         <div class="layers">
-          <div class="layer-row layer-row--vue" :class="{ 'layer-row--visible': layersVisible >= 1 }">
-            <div class="layer-row__accent" />
-            <div class="layer-row__body">
-              <span class="layer-row__name font-mono">Vue Plugin</span>
-              <span class="layer-row__desc">An <code>install()</code> function. The foundation. Extends Vue instances with new properties and methods.</span>
-            </div>
-          </div>
-          <div class="layer-row layer-row--plugin" :class="{ 'layer-row--visible': layersVisible >= 2 }">
-            <div class="layer-row__accent" />
-            <div class="layer-row__body">
-              <span class="layer-row__name font-mono">Nuxt Plugin</span>
-              <span class="layer-row__desc">A <code>plugins/</code> file. Wraps Vue plugins; injects <code>$helpers</code> into context, Vue, and the store.</span>
-            </div>
-          </div>
-          <div class="layer-row layer-row--module" :class="{ 'layer-row--visible': layersVisible >= 3 }">
-            <div class="layer-row__accent" />
-            <div class="layer-row__body">
-              <span class="layer-row__name font-mono">Nuxt Module</span>
-              <span class="layer-row__desc">Runs at startup — before Vue exists. Calls <code>addPlugin()</code> programmatically. Maximum power.</span>
-            </div>
-          </div>
-        </div>
+  <div class="layer-row layer-row--vue" :class="{ 'layer-row--visible': layersVisible >= 1 }">
+    <div class="layer-row__accent" />
+    <div class="layer-row__body">
+      <span class="layer-row__name font-mono">Script</span>
+      <span class="layer-row__desc">
+        The actual runtime logic. For example, initializing a service, registering an event listener, or exposing a function.
+      </span>
+    </div>
+  </div>
+
+  <div class="layer-row layer-row--plugin" :class="{ 'layer-row--visible': layersVisible >= 2 }">
+    <div class="layer-row__accent" />
+    <div class="layer-row__body">
+      <span class="layer-row__name font-mono">Nuxt Plugin</span>
+      <span class="layer-row__desc">
+        Runs at runtime when the Nuxt app is created. Used to initialize runtime functionality and make it available to the app.
+      </span>
+    </div>
+  </div>
+
+  <div class="layer-row layer-row--module" :class="{ 'layer-row--visible': layersVisible >= 3 }">
+    <div class="layer-row__accent" />
+    <div class="layer-row__body">
+      <span class="layer-row__name font-mono">Nuxt Module</span>
+      <span class="layer-row__desc">
+        Runs at build time, before the Nuxt app exists. Used to configure Nuxt and register things such as plugins, components, or hooks.
+      </span>
+    </div>
+  </div>
+</div>
       </div>
 
       

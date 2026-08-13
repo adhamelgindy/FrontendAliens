@@ -17,7 +17,7 @@
 
       <!-- Description -->
       <p class="landing__desc">
-        Year 3000. The frontend fleet is degraded. Laptops are slow, builds take minutes, hot reload barely survives.
+        Year 3000. The aconso frontend fleet is degraded. Laptops are slow, builds take minutes, hot reload barely survives.
         <br /><br />
         The team travels to Saturn to acquire quantum-grade hardware. During transit, the crew discovers that Voyager 1 had already been damaged in a previous collision. The impact corrupted the Golden Record Frontend Runtime Archive, affecting the live signal tracker.
         <br /><br />
@@ -177,7 +177,7 @@ function handleReset() {
   flex-direction: column;
   align-items: flex-start;
   gap: 28px;
-  max-width: 640px;
+  max-width: 700px;
 }
 
 .landing__eyebrow {
@@ -398,9 +398,9 @@ function handleReset() {
 }
 
 .landing__desc {
-  font-size: 1rem;
+  font-size: 1.5rem;
   color: var(--muted);
-  max-width: 520px;
+  max-width: 100%;
   line-height: 1.7;
 }
 

@@ -12,12 +12,12 @@
 
       <!-- Header -->
       <div class="level-page__header">
-        <p class="eyebrow">Architecture Layer One</p>
+        <p class="eyebrow">Base function</p>
         <h1 class="level-page__title font-title">
           Level 01 — Warm up: Composable 
         </h1>
         <p class="level-page__narrative">
-          Voyager's signal grows stronger the deeper it drifts into space. The <code>update()</code> function is ready — but nobody told the composable when to start or stop listening. Wire up the scroll listener using Vue's lifecycle hooks.
+          Voyager's signal has grown weaker the more it drifted into space. The <code>update()</code> function is ready, but nobody told the composable when to start or stop listening. Wire up the scroll listener using Vue's lifecycle hooks.
         </p>
       </div>
 
@@ -76,30 +76,7 @@
         />
       </div>
 
-      <!-- Live Signal Tracker -->
-      <div class="signal-tracker card" @wheel.prevent="onTrackerScroll">
-        <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
-        <div v-if="isCorrect && liveSignal < 75" class="signal-tracker__hint font-mono">↕ scroll here to tune the signal</div>
-        <div class="signal-tracker__container">
-          <div class="signal-tracker__bar-wrapper">
-            <div class="signal-tracker__bar">
-              <div
-                class="signal-tracker__fill"
-                :style="{
-                  width: liveSignal + '%',
-                  backgroundColor: getSignalColor(liveSignal),
-                }"
-              />
-            </div>
-          </div>
-          <div class="signal-tracker__status">
-            <span class="signal-tracker__value">{{ Math.round(liveSignal) }}%</span>
-            <span v-if="liveSignal < 40" class="status-critical">🔴 CRITICAL</span>
-            <span v-else-if="liveSignal < 80" class="status-weak">🟠 WEAK</span>
-            <span v-else class="status-strong">🟢 STRONG</span>
-          </div>
-        </div>
-      </div>
+      
 
       <!-- Hint -->
       <div v-if="showHint" class="alert alert--hint">
@@ -141,6 +118,30 @@
         >
           Reset
         </button>
+        <!-- Live Signal Tracker -->
+      <div class="signal-tracker card" @wheel.prevent="onTrackerScroll">
+        <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
+        <div v-if="isCorrect && liveSignal < 75" class="signal-tracker__hint font-mono">↕ scroll here to tune the signal</div>
+        <div class="signal-tracker__container">
+          <div class="signal-tracker__bar-wrapper">
+            <div class="signal-tracker__bar">
+              <div
+                class="signal-tracker__fill"
+                :style="{
+                  width: liveSignal + '%',
+                  backgroundColor: getSignalColor(liveSignal),
+                }"
+              />
+            </div>
+          </div>
+          <div class="signal-tracker__status">
+            <span class="signal-tracker__value">{{ Math.round(liveSignal) }}%</span>
+            <span v-if="liveSignal < 40" class="status-critical">🔴 CRITICAL</span>
+            <span v-else-if="liveSignal < 80" class="status-weak">🟠 WEAK</span>
+            <span v-else class="status-strong">🟢 STRONG</span>
+          </div>
+        </div>
+      </div>
         <button
           v-if="!isCorrect"
           class="btn btn--primary"
@@ -171,8 +172,8 @@ export function useSignalTracker() {
   }
 
   // TODO: on mount, add a 'scroll' event listener on window that calls update
-  // TODO: on unmount, remove that same listener
-  // TODO: return signalStrength
+  // TODO: on unmount, remove the event listener
+  // TODO: Return signalStrength in an object
 }`
 
 const CORRECT_CODE = `

@@ -105,7 +105,7 @@
         <!-- Hint -->
         <div v-if="showHint" class="alert alert--hint">
           <span>
-            <strong>Hint:</strong> Call <code>useSignalTracker()</code> to get the tracker instance. Then use <code>useRouter()</code> to get the router. Chain <code>router.afterEach((to) => { ... })</code> to capture route changes. Finally, return an object with <code>provide: { signalTracker: tracker }</code> to make it available app-wide.
+            <strong>Hint: </strong>  Destructure signalStrength from <code>useSignalTracker()</code> to get the tracker instance. Finally, return an object with <code>provide: { signalTracker: tracker }</code> to make it available app-wide.
           </span>
         </div>
 
@@ -171,7 +171,7 @@ export default defineNuxtPlugin({
   name: 'signal-tracker',
   setup() {
     // TODO: call useSignalTracker to get the tracker instance
-    // TODO: provide it as 'signalTracker'
+    // TODO: return and provide it as 'signalTracker'
   },
 })`
 

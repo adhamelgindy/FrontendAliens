@@ -167,15 +167,8 @@ const { $missionStatus } = useNuxtApp()
             </button>
             <button v-if="!isCorrect" class="btn btn--ghost" @click="resetCode">Reset</button>
           </div>
-          <div class="wizard-nav__right">
-            <button v-if="step > 1" class="btn btn--ghost" @click="step--">← Back</button>
-            <button v-if="step < 4" class="btn btn--primary" @click="step++">Next →</button>
-            <button v-if="step === 4 && !isCorrect" class="btn btn--primary" @click="checkAnswer">▶ Transmit</button>
-            <NuxtLink v-if="isCorrect && liveSignal >= 99" to="/finale" class="btn btn--success">View Finale →</NuxtLink>
-          </div>
-        </div>
 
-        <!-- Live Signal Tracker -->
+          <!-- Live Signal Tracker -->
         <div class="signal-tracker card">
           <div class="signal-tracker__header font-mono">Live Signal Tracker</div>
           <div class="signal-tracker__container">
@@ -198,6 +191,16 @@ const { $missionStatus } = useNuxtApp()
             </div>
           </div>
         </div>
+        
+          <div class="wizard-nav__right">
+            <button v-if="step > 1" class="btn btn--ghost" @click="step--">← Back</button>
+            <button v-if="step < 4" class="btn btn--primary" @click="step++">Next →</button>
+            <button v-if="step === 4 && !isCorrect" class="btn btn--primary" @click="checkAnswer">▶ Transmit</button>
+            <NuxtLink v-if="isCorrect && liveSignal >= 99" to="/finale" class="btn btn--success">Final step →</NuxtLink>
+          </div>
+        </div>
+
+        
       </template>
     </div>
   </div>
