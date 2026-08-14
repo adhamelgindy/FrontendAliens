@@ -52,7 +52,7 @@
             </div>
             <div :class="['test-case', pluginChecks.provide ? 'test-case--pass' : 'test-case--fail']">
               <span class="test-case__icon">{{ pluginChecks.provide ? '✓' : '✗' }}</span>
-              <span class="test-case__label">provide: { signalTracker: ... }</span>
+              <span class="test-case__label">signalTracker provides the signalStrength ref</span>
               <!-- <span class="test-case__expect">— tracker not provided</span> -->
             </div>
           </div>
@@ -105,7 +105,7 @@
         <!-- Hint -->
         <div v-if="showHint" class="alert alert--hint">
           <span>
-            <strong>Hint: </strong>  Destructure signalStrength from <code>useSignalTracker()</code> to get the tracker instance. Finally, return an object with <code>provide: { signalTracker: tracker }</code> to make it available app-wide.
+            <strong>Hint: </strong> Use <code>const { signalStrength } = useSignalTracker()</code> — destructure the ref out of the composable, don't assign the whole return object. Then return <code>provide: { signalTracker: signalStrength }</code> to expose that ref app-wide.
           </span>
         </div>
 
@@ -201,11 +201,43 @@ function getSignalColor(value: number): string {
 }
 
 const pluginChecks = computed(() => {
-  const c = userCode.value
-  return {
-    composable: /useSignalTracker\s*\(\s*\)/.test(c),
-    setup:      /setup\s*\(\s*\)/.test(c),
-    provide:    /provide\s*:\s*\{\s*signalTracker\s*:/.test(c),
+  const blank = { composable: false, setup: false, provide: false }
+
+  let composableCalled = false
+  let capturedConfig: any = null
+  const mockSignalStrength = { value: 42 }
+
+  const mockUseSignalTracker = () => {
+    composableCalled = true
+    return { signalStrength: mockSignalStrength }
+  }
+
+  const mockDefineNuxtPlugin = (config: any) => {
+    capturedConfig = config
+  }
+
+  try {
+    const stripped = userCode.value
+      .replace(/^import\s+.*[\r\n]*/gm, '')
+      .replace(/^export\s+default\s+/gm, '')
+
+    const execute = new Function('defineNuxtPlugin', 'useSignalTracker', stripped)
+    execute(mockDefineNuxtPlugin, mockUseSignalTracker)
+
+    if (!capturedConfig) return blank
+
+    const hasSetup = typeof capturedConfig.setup === 'function'
+    if (!hasSetup) return { ...blank, setup: false }
+
+    const setupResult = capturedConfig.setup()
+
+    return {
+      composable: composableCalled,
+      setup:      hasSetup,
+      provide:    setupResult?.provide?.signalTracker === mockSignalStrength,
+    }
+  } catch {
+    return blank
   }
 })
 

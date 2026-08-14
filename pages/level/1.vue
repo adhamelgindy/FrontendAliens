@@ -149,7 +149,7 @@
         >
           ▶ Transmit Fix
         </button>
-        <NuxtLink v-if="isCorrect" to="/level/2" class="btn btn--success">
+        <NuxtLink v-if="isCorrect && liveSignal >= 75" to="/level/2" class="btn btn--success">
           Continue to Level 02 →
         </NuxtLink>
       </div>
@@ -201,17 +201,53 @@ const showHint  = ref(false)
 const liveSignal = ref(0)
 
 const composableChecks = computed(() => {
-  const c = userCode.value
-  const codeOnly = c
-    .split('\n')
-    .filter(line => !line.trim().startsWith('//'))
-    .join('\n')
-  return {
-    onMounted:   /onMounted\s*\(/.test(codeOnly),
-    addListener: /window\.addEventListener\s*\(\s*['"]scroll['"]/.test(codeOnly),
-    onUnmounted: /onUnmounted\s*\(/.test(codeOnly),
-    removeListener: /window\.removeEventListener\s*\(\s*['"]scroll['"]/.test(codeOnly),
-    returned:    /return\s*\{\s*signalStrength\s*\}/.test(codeOnly),
+  const blank = { onMounted: false, addListener: false, onUnmounted: false, removeListener: false, returned: false }
+
+  const mountedCbs: Function[] = []
+  const unmountedCbs: Function[] = []
+  const addCalls: { event: string; fn: Function }[] = []
+  const removeCalls: { event: string; fn: Function }[] = []
+
+  const mockRef = (v: any) => ({ value: v })
+  const mockOnMounted = (cb: Function) => mountedCbs.push(cb)
+  const mockOnUnmounted = (cb: Function) => unmountedCbs.push(cb)
+  const mockWindow = {
+    addEventListener: (event: string, fn: Function) => addCalls.push({ event, fn }),
+    removeEventListener: (event: string, fn: Function) => removeCalls.push({ event, fn }),
+    scrollY: 50,
+    innerHeight: 100,
+  }
+
+  try {
+    const stripped = userCode.value
+      .replace(/^import\s+.*[\r\n]*/gm, '')
+      .replace(/^export\s+/gm, '')
+
+    const factory = new Function(
+      'ref', 'onMounted', 'onUnmounted', 'window',
+      `${stripped}; return typeof useSignalTracker !== 'undefined' ? useSignalTracker : null;`
+    )
+
+    const useSignalTracker = factory(mockRef, mockOnMounted, mockOnUnmounted, mockWindow)
+    if (!useSignalTracker) return blank
+
+    const result = useSignalTracker()
+
+    mountedCbs.forEach(cb => cb())
+    unmountedCbs.forEach(cb => cb())
+
+    const addedFn = addCalls.find(c => c.event === 'scroll')?.fn
+    const removedFn = removeCalls.find(c => c.event === 'scroll')?.fn
+
+    return {
+      onMounted:      mountedCbs.length > 0,
+      addListener:    addCalls.some(c => c.event === 'scroll'),
+      onUnmounted:    unmountedCbs.length > 0,
+      removeListener: removeCalls.some(c => c.event === 'scroll') && addedFn === removedFn,
+      returned:       result != null && 'signalStrength' in result,
+    }
+  } catch {
+    return blank
   }
 })
 
